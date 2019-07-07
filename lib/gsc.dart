@@ -1,5 +1,6 @@
 class Gsc {
   int id;
+  int audioId;
   String workTitle;
   String workAuthor;
   String content;
@@ -47,6 +48,7 @@ class Gsc {
     this.intro = gsc["intro"];
     this.foreword = gsc["foreword"];
     this.appreciation = gsc["appreciation"];
+    this.audioId = gsc["audio_id"];
     setShortContent();
 
     if (this.layout == 'indent') {

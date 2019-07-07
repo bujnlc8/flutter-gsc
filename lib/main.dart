@@ -4,6 +4,7 @@ import 'gsc.dart';
 
 import 'package:flutter/material.dart';
 
+const mainColor = Color.fromARGB(255, 98, 91, 87);
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -22,14 +23,15 @@ class MyApp extends StatelessWidget {
           // or simply save your changes to "hot reload" in a Flutter IDE).
           // Notice that the counter didn't reset back to zero; the application
           // is not restarted.
-          primaryColor: Colors.cyan),
-      home: MyHomePage(title: 'i古诗词'),
+          primaryColor: mainColor),
+      home: MyHomePage(title: 'i古诗词', gsc: null,),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  Gsc gsc = null;
+  MyHomePage({Key key, this.title, this.gsc}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -43,18 +45,26 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyHomePageState createState() => _MyHomePageState(gsc);
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  Gsc _gsc = null;
+  _MyHomePageState(gsc){
+    this._gsc = gsc;
+  }
   List<Gsc> gscList = [];
-  var loading = true;
+  var loading = false;
+  var style = TextStyle(height: 1.5, fontSize: 15, fontFamily: "songkai");
+
   HttpClient httpClient = new HttpClient();
+
   final homeAip = "https://igsc.wx.haihui.site/songci/index/all/b";
   final searchAip =
       "https://igsc.wx.haihui.site/songci/query/{inputText}/main/b";
 
   var editController = TextEditingController();
+  var _contentFocusNode = FocusNode();
 
   void getHomeGsc() async {
     this.gscList = [];
@@ -62,6 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
     HttpClientRequest request =
         await httpClient.getUrl(Uri.parse(this.homeAip));
+    request.headers.add("user-agent", "iGsc/0.0.1");
     HttpClientResponse response = await request.close();
     var resp = await response.transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
@@ -72,7 +83,8 @@ class _MyHomePageState extends State<MyHomePage> {
     this.loading = false;
     setState(() {});
   }
-
+ 
+  // 跳转到详情
   void goToDetail(Gsc gsc) {
     Navigator.push(
       context,
@@ -109,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           softWrap: true,
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(height: 1.5, fontFamily: "songkai"),
+                          style: style,
                         ),
                       ),
                       Padding(
@@ -119,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           softWrap: true,
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(height: 1.5, fontFamily: "songkai"),
+                          style: style
                         ),
                       ),
                     ],
@@ -134,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         padding: new EdgeInsets.all(8),
                         child: Text(
                           "",
-                          style: TextStyle(height: 1.5, fontFamily: "songkai"),
+                          style: style
                         ),
                       ),
                       Padding(
@@ -145,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               "】" +
                               gsc.workAuthor.toString(),
                           textAlign: TextAlign.end,
-                          style: TextStyle(height: 1.5, fontFamily: "songkai"),
+                          style: style
                         ),
                       )
                     ],
@@ -162,15 +174,28 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     // 初始化获取gsc
-    getHomeGsc();
+    if(this._gsc!=null){
+      editController.text = this._gsc.workAuthor;
+      search(this._gsc.workAuthor);
+    }else{
+      getHomeGsc();
+    }
     super.initState();
   }
 
-  void search() async {
+  void search(searchText) async {
     this.gscList = [];
+    if(this.loading){
+      return;
+    }
     this.loading = true;
     setState(() {});
-    var inputText = this.editController.text.trim();
+    var inputText;
+    if(searchText==null){
+      inputText = this.editController.text.trim();
+    }else{
+      inputText = searchText;
+    }
     Uri uri;
     if (inputText.length == 0) {
       uri = Uri.parse(homeAip);
@@ -178,6 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
       uri = Uri.parse(searchAip.replaceAll("{inputText}", inputText));
     }
     HttpClientRequest request = await httpClient.getUrl(uri);
+    request.headers.add("user-agent", "iGsc/0.0.1");
     HttpClientResponse response = await request.close();
     var resp = await response.transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
@@ -193,7 +219,7 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> result = [];
     result.add(
       Center(child:
-          new CircularProgressIndicator()
+          new CircularProgressIndicator(backgroundColor: mainColor)
       )
     );
     return result;
@@ -243,17 +269,25 @@ class _MyHomePageState extends State<MyHomePage> {
                       padding: const EdgeInsets.only(
                         left: 10, right: 10, top: 1, bottom: 0),
                       child: TextFormField(
+                      focusNode: _contentFocusNode,
                       autofocus: false,
                       style: TextStyle(color: Colors.blueGrey),
                       strutStyle: StrutStyle(fontStyle: FontStyle.italic),
                       controller: editController,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.search,
+                      onEditingComplete: (){
+                        _contentFocusNode.unfocus();
+                        search(null);
+                        },
                     ),
                     )
                   ),
                   IconButton(
                     icon: Icon(Icons.search),
-                    onPressed: () => {
-                      search()
+                    onPressed: () {
+                      _contentFocusNode.unfocus();
+                      search(null);
                       },
                   )
                 ],
@@ -289,9 +323,9 @@ class GscDetailScreen extends StatelessWidget {
   GscDetailScreen(this.gsc);
 
   final TextStyle style =
-      TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 16);
+      TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 18);
   final TextStyle styleTranslation =
-      TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 14);
+      TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 16);
 
   Widget renderTranslation(Gsc gsc) {
     if (gsc.translation.length > 0) {
@@ -331,15 +365,24 @@ class GscDetailScreen extends StatelessWidget {
           padding: EdgeInsets.all(10),
           //shrinkWrap: true,
           children: <Widget>[
+
             Text(
               this.gsc.workTitle,
               style: style,
               textAlign: TextAlign.center,
             ),
-            Text(
+            new GestureDetector(
+              child: Text(
               "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
               style: style,
               textAlign: TextAlign.center,
+            ),
+            onTap: ()=>{
+              Navigator.push(
+              context,
+              new MaterialPageRoute(builder: (context) => new MyHomePage(title: "i古诗词", gsc: gsc)),
+            )
+            },
             ),
             renderContent(this.gsc), // 正文
             Padding(
