@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
+
 import 'gsc.dart';
 
 import 'package:flutter/material.dart';
@@ -24,7 +26,10 @@ class MyApp extends StatelessWidget {
           // Notice that the counter didn't reset back to zero; the application
           // is not restarted.
           primaryColor: mainColor),
-      home: MyHomePage(title: 'i古诗词', gsc: null,),
+      home: MyHomePage(
+        title: 'i古诗词',
+        gsc: null,
+      ),
     );
   }
 }
@@ -50,7 +55,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Gsc _gsc = null;
-  _MyHomePageState(gsc){
+  _MyHomePageState(gsc) {
     this._gsc = gsc;
   }
   List<Gsc> gscList = [];
@@ -83,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
     this.loading = false;
     setState(() {});
   }
- 
+
   // 跳转到详情
   void goToDetail(Gsc gsc) {
     Navigator.push(
@@ -92,8 +97,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  List<Widget> renderListView() {
-    if(this.loading){
+  Widget renderListView() {
+    if (this.loading) {
       return getProgressDialog();
     }
     List<Widget> result = [];
@@ -126,13 +131,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       Padding(
                         padding: new EdgeInsets.all(8),
-                        child: Text(
-                          gsc.shortContent,
-                          softWrap: true,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: style
-                        ),
+                        child: Text(gsc.shortContent,
+                            softWrap: true,
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: style),
                       ),
                     ],
                   ),
@@ -144,21 +147,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: <Widget>[
                       Padding(
                         padding: new EdgeInsets.all(8),
-                        child: Text(
-                          "",
-                          style: style
-                        ),
+                        child: Text("", style: style),
                       ),
                       Padding(
                         padding: new EdgeInsets.all(8),
                         child: Text(
-                          "【" +
-                              gsc.workDynasty +
-                              "】" +
-                              gsc.workAuthor.toString(),
-                          textAlign: TextAlign.end,
-                          style: style
-                        ),
+                            "【" +
+                                gsc.workDynasty +
+                                "】" +
+                                gsc.workAuthor.toString(),
+                            textAlign: TextAlign.end,
+                            style: style),
                       )
                     ],
                   ),
@@ -168,16 +167,20 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           )));
     }
-    return result;
+    return ListView(
+        shrinkWrap: true,
+        primary: true,
+        padding: const EdgeInsets.only(left: 0, right: 10, top: 10, bottom: 10),
+        children: result);
   }
 
   @override
   void initState() {
     // 初始化获取gsc
-    if(this._gsc!=null){
+    if (this._gsc != null) {
       editController.text = this._gsc.workAuthor;
       search(this._gsc.workAuthor);
-    }else{
+    } else {
       getHomeGsc();
     }
     super.initState();
@@ -185,15 +188,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void search(searchText) async {
     this.gscList = [];
-    if(this.loading){
+    if (this.loading) {
       return;
     }
     this.loading = true;
     setState(() {});
     var inputText;
-    if(searchText==null){
+    if (searchText == null) {
       inputText = this.editController.text.trim();
-    }else{
+    } else {
       inputText = searchText;
     }
     Uri uri;
@@ -215,14 +218,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  getProgressDialog(){
-    List<Widget> result = [];
-    result.add(
-      Center(child:
-          new CircularProgressIndicator(backgroundColor: mainColor)
-      )
-    );
-    return result;
+  getProgressDialog() {
+    return Center(child: new CupertinoActivityIndicator());
   }
 
   @override
@@ -264,32 +261,48 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: 
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 10, right: 10, top: 1, bottom: 0),
-                      child: TextFormField(
-                      focusNode: _contentFocusNode,
-                      autofocus: false,
-                      style: TextStyle(color: Colors.blueGrey),
-                      strutStyle: StrutStyle(fontStyle: FontStyle.italic),
-                      controller: editController,
-                      keyboardType: TextInputType.text,
-                      textInputAction: TextInputAction.search,
-                      onEditingComplete: (){
+                      child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 10, right: 0, top: 10, bottom: 0),
+                    child: TextFormField(
+                        focusNode: _contentFocusNode,
+                        autofocus: false,
+                        style: TextStyle(
+                            color: Colors.blueGrey, fontFamily: "songkai"),
+                        maxLines: 1,
+                        strutStyle: StrutStyle(fontStyle: FontStyle.italic),
+                        controller: editController,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.search,
+                        onEditingComplete: () {
+                          _contentFocusNode.unfocus();
+                          search(null);
+                        },
+                        decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide(color: mainColor)),
+                            isDense: false,
+                            hintText: '请输入搜索内容',
+                            suffixIcon: IconButton(
+                                iconSize: 18,
+                                icon: Icon(Icons.clear),
+                                onPressed: () {
+                                  if (editController.text.trim() != "") {
+                                    getHomeGsc();
+                                  }
+                                  editController.text = "";
+                                }),
+                            contentPadding: EdgeInsets.all(8.0))),
+                  )),
+                  IconButton(
+                      icon: Icon(Icons.search),
+                      onPressed: () {
                         _contentFocusNode.unfocus();
                         search(null);
-                        },
-                    ),
-                    )
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.search),
-                    onPressed: () {
-                      _contentFocusNode.unfocus();
-                      search(null);
                       },
-                  )
+                      padding: const EdgeInsets.only(
+                          left: 0, right: 0, top: 10, bottom: 0)),
                 ],
               ),
               Row(
@@ -297,20 +310,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: <Widget>[
                     Padding(
                       padding: const EdgeInsets.only(
-                        left: 10, right: 10, top: 10, bottom: 0),
-                      child: Text("搜索结果({num})"
-                        .replaceAll("{num}", this.gscList.length.toString()), style: TextStyle(fontWeight: FontWeight.w600),),
+                          left: 10, right: 10, top: 10, bottom: 0),
+                      child: Text(
+                        "搜索结果({num})".replaceAll(
+                            "{num}", this.gscList.length.toString()),
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     )
-                    
                   ]),
-              Expanded(
-                child: ListView(
-                    shrinkWrap: true,
-                    primary: true,
-                    padding: const EdgeInsets.only(
-                        left: 0, right: 10, top: 10, bottom: 10),
-                    children: renderListView()),
-              )
+              Expanded(child: renderListView())
             ],
           ),
         ));
@@ -365,7 +373,6 @@ class GscDetailScreen extends StatelessWidget {
           padding: EdgeInsets.all(10),
           //shrinkWrap: true,
           children: <Widget>[
-
             Text(
               this.gsc.workTitle,
               style: style,
@@ -373,16 +380,18 @@ class GscDetailScreen extends StatelessWidget {
             ),
             new GestureDetector(
               child: Text(
-              "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
-              style: style,
-              textAlign: TextAlign.center,
-            ),
-            onTap: ()=>{
-              Navigator.push(
-              context,
-              new MaterialPageRoute(builder: (context) => new MyHomePage(title: "i古诗词", gsc: gsc)),
-            )
-            },
+                "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
+                style: style,
+                textAlign: TextAlign.center,
+              ),
+              onTap: () => {
+                    Navigator.push(
+                      context,
+                      new MaterialPageRoute(
+                          builder: (context) =>
+                              new MyHomePage(title: "i古诗词", gsc: gsc)),
+                    )
+                  },
             ),
             renderContent(this.gsc), // 正文
             Padding(
