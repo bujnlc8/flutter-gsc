@@ -335,8 +335,11 @@ class GscDetailScreen extends StatelessWidget {
 
   GscDetailScreen(this.gsc);
 
-  final TextStyle style =
-      TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 18);
+  final TextStyle style = TextStyle(
+    height: 1.5,
+    fontFamily: "songkai",
+    fontSize: 18,
+  );
   final TextStyle styleTranslation =
       TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 16);
 
@@ -400,6 +403,32 @@ class GscDetailScreen extends StatelessWidget {
     );
   }
 
+  renderTabBar(Gsc gsc) {
+    var result = <MyTabItem>[];
+    if (gsc.intro.length > 0) {
+      result.add(MyTabItem("评析", gsc.intro));
+    }
+    if (gsc.annotation.length > 0) {
+      result.add(MyTabItem("注释", gsc.annotation));
+    }
+    if (gsc.translation.length > 0) {
+      result.add(MyTabItem("译文", gsc.translation));
+    }
+    if (gsc.appreciation.length > 0) {
+      result.add(MyTabItem("赏析", gsc.appreciation));
+    }
+    if (gsc.masterComment.length > 0) {
+      result.add(MyTabItem("辑评", gsc.masterComment));
+    }
+    if (result.length == 0) {
+      return new Container(
+        width: 0,
+        height: 0,
+      );
+    }
+    return MyTabBar(result);
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -410,15 +439,17 @@ class GscDetailScreen extends StatelessWidget {
             //Text(this.gsc.content, style: TextStyle(height: 1.5, fontFamily: "songkai"))
             child: ListView(
           padding: EdgeInsets.all(10),
-          //shrinkWrap: true,
           children: <Widget>[
-            Row(
+            Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
                   this.gsc.workTitle,
                   style: style,
                   textAlign: TextAlign.center,
+                  maxLines: 3,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 renderPlayIcon(gsc)
               ],
@@ -440,8 +471,9 @@ class GscDetailScreen extends StatelessWidget {
             ),
             renderForeword(gsc), // foreword
             renderContent(gsc), // 正文
-            Padding(
-                padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
+            // Padding(
+            //     padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
+            renderTabBar(this.gsc),
           ],
         )));
   }
@@ -469,7 +501,6 @@ class _PlayAudioWidgetState extends State<StatefulWidget> {
     this.playUrl = playUrl;
     audioPlayer.onPlayerStateChanged.listen((onData) {
       if (onData == AudioPlayerState.STOPPED) {
-        debugPrint("stop");
         setState(() {
           isPlaying = false;
         });
@@ -507,5 +538,112 @@ class _PlayAudioWidgetState extends State<StatefulWidget> {
           padding: EdgeInsets.only(left: 8, top: 14, right: 8, bottom: 8),
           onPressed: () => {this.togglePlaying()});
     }
+  }
+}
+
+class MyTabItem extends StatelessWidget {
+  // tab名称
+  String tabName;
+  // tab内容
+  String tabContent;
+
+  MyTabItem(tabName, tabContent, {Key key}) {
+    this.tabName = tabName;
+    this.tabContent = tabContent;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(this.tabName),
+          Text(this.tabContent),
+        ]);
+  }
+}
+
+class MyTabBar extends StatefulWidget {
+  List<MyTabItem> children;
+
+  @override
+  State<StatefulWidget> createState() {
+    return new _MyTabBarState(this.children);
+  }
+
+  MyTabBar(List<MyTabItem> children) {
+    this.children = children;
+  }
+}
+
+class _MyTabBarState extends State<MyTabBar> {
+  List<MyTabItem> children;
+
+  String selectContent;
+
+  String selectItem;
+
+  _MyTabBarState(children) {
+    this.children = children;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selectContent = this.children[0].tabContent;
+    selectItem = this.children[0].tabName;
+  }
+
+  Widget getContent() {
+    return Padding(
+        padding: EdgeInsets.only(left: 15, right: 15, top: 0, bottom: 5),
+        child: Text(
+          this.selectContent,
+          style: TextStyle(fontSize: 16, height: 1.4),
+        ));
+  }
+
+  Widget genIcon(item) {
+    if (item == this.selectItem) {
+      return Icon(
+        Icons.maximize,
+        size: 16,
+      );
+    } else {
+      return Icon(Icons.maximize, size: 0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var result = <Widget>[];
+    for (var i = 0; i < this.children.length; i++) {
+      result.add(Expanded(
+          child: Column(children: <Widget>[
+        FlatButton(
+            highlightColor: mainColor,
+            child: Text(this.children[i].tabName),
+            onPressed: () {
+              setState(() {
+                selectContent = this.children[i].tabContent;
+                selectItem = this.children[i].tabName;
+              });
+            }),
+        genIcon(this.children[i].tabName),
+      ])));
+    }
+    if (result.length < 5) {
+      for (var i = 0; i < 5 - result.length; i++)
+        result.add(Expanded(
+          child: Text(""),
+        ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: result),
+        getContent()
+      ],
+    );
   }
 }
