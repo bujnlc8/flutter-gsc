@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
+import 'package:audioplayer/audioplayer.dart';
 
 import 'gsc.dart';
 
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  Gsc gsc = null;
+  final Gsc gsc;
   MyHomePage({Key key, this.title, this.gsc}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
@@ -55,7 +56,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Gsc _gsc = null;
+  Gsc _gsc;
   _MyHomePageState(gsc) {
     this._gsc = gsc;
   }
@@ -220,7 +221,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getProgressDialog() {
-    return Center(child: new CupertinoActivityIndicator(radius: 25,));
+    return Center(
+        child: new CupertinoActivityIndicator(
+      radius: 25,
+    ));
   }
 
   @override
@@ -336,7 +340,11 @@ class GscDetailScreen extends StatelessWidget {
   final TextStyle styleTranslation =
       TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 16);
 
-  final TextStyle styleForeword = TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 14, fontStyle: FontStyle.italic);
+  final TextStyle styleForeword = TextStyle(
+      height: 1.5,
+      fontFamily: "songkai",
+      fontSize: 14,
+      fontStyle: FontStyle.italic);
 
   Widget renderTranslation(Gsc gsc) {
     if (gsc.translation.length > 0) {
@@ -345,7 +353,10 @@ class GscDetailScreen extends StatelessWidget {
         style: styleTranslation,
       );
     } else {
-      return new Container(width: 0, height: 0,);
+      return new Container(
+        width: 0,
+        height: 0,
+      );
     }
   }
 
@@ -364,7 +375,7 @@ class GscDetailScreen extends StatelessWidget {
     }
   }
 
-  Widget renderForeword(Gsc gsc){
+  Widget renderForeword(Gsc gsc) {
     if (gsc.foreword.length > 0) {
       return Text(
         this.gsc.foreword,
@@ -372,8 +383,21 @@ class GscDetailScreen extends StatelessWidget {
         textAlign: TextAlign.left,
       );
     } else {
-      return new Container(width: 0, height: 0,);
+      return new Container(
+        width: 0,
+        height: 0,
+      );
     }
+  }
+
+  Widget renderPlayIcon(Gsc gsc) {
+    if (gsc.audioId > 0) {
+      return PlayAudioWidget(playUrl: gsc.playUrl);
+    }
+    return new Container(
+      width: 0,
+      height: 0,
+    );
   }
 
   @override
@@ -388,10 +412,16 @@ class GscDetailScreen extends StatelessWidget {
           padding: EdgeInsets.all(10),
           //shrinkWrap: true,
           children: <Widget>[
-            Text(
-              this.gsc.workTitle,
-              style: style,
-              textAlign: TextAlign.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  this.gsc.workTitle,
+                  style: style,
+                  textAlign: TextAlign.center,
+                ),
+                renderPlayIcon(gsc)
+              ],
             ),
             new GestureDetector(
               child: Text(
@@ -414,5 +444,68 @@ class GscDetailScreen extends StatelessWidget {
                 padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
           ],
         )));
+  }
+}
+
+class PlayAudioWidget extends StatefulWidget {
+  final String playUrl;
+
+  @override
+  State<StatefulWidget> createState() {
+    return new _PlayAudioWidgetState(this.playUrl);
+  }
+
+  PlayAudioWidget({Key key, this.playUrl}) : super(key: key);
+}
+
+class _PlayAudioWidgetState extends State<StatefulWidget> {
+  // 是否在播放
+  bool isPlaying = false;
+  // 播放链接
+  String playUrl = "";
+
+  final AudioPlayer audioPlayer = new AudioPlayer();
+  _PlayAudioWidgetState(playUrl) {
+    this.playUrl = playUrl;
+    audioPlayer.onPlayerStateChanged.listen((onData) {
+      if (onData == AudioPlayerState.STOPPED) {
+        debugPrint("stop");
+        setState(() {
+          isPlaying = false;
+        });
+      }
+    }, onError: (msg) {
+      setState(() {
+        isPlaying = false;
+      });
+      debugPrint(msg);
+    });
+  }
+
+  void togglePlaying() async {
+    if (!isPlaying) {
+      debugPrint(this.playUrl);
+      await audioPlayer.play(this.playUrl);
+    } else {
+      await audioPlayer.pause();
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (this.isPlaying) {
+      return IconButton(
+          icon: Icon(Icons.pause),
+          padding: EdgeInsets.only(left: 8, top: 14, right: 8, bottom: 8),
+          onPressed: () => {this.togglePlaying()});
+    } else {
+      return IconButton(
+          icon: Icon(Icons.play_arrow),
+          padding: EdgeInsets.only(left: 8, top: 14, right: 8, bottom: 8),
+          onPressed: () => {this.togglePlaying()});
+    }
   }
 }

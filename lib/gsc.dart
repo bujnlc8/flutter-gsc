@@ -11,6 +11,7 @@ class Gsc {
   String foreword;
   String appreciation;
   String shortContent;
+  String playUrl;
 
   void setShortContent(){
     // 句号
@@ -59,6 +60,9 @@ class Gsc {
     }
     if(this.foreword.length > 0){
       this.foreword  = "　　" + this.foreword;
+    }
+    if(this.audioId > 0){
+      this.playUrl = "https://songci.nos-eastchina1.126.net/audio/{}.m4a".replaceAll("{}", this.audioId.toString());
     }
   }
 }
