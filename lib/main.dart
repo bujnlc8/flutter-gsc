@@ -62,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
   List<Gsc> gscList = [];
   var loading = false;
-  var style = TextStyle(height: 1.5, fontSize: 15, fontFamily: "songkai");
+  var style = TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
 
   HttpClient httpClient = new HttpClient();
 
@@ -165,10 +165,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 )
               ]),
-              Divider(height: 10.0, indent: 8.0, color: Colors.grey),
+              Divider(height: 1.0, indent: 8.0, color: Colors.grey),
             ],
           )));
     }
+    result.add(Padding(
+      padding: EdgeInsets.all(15),
+    ));
     return ListView(
         shrinkWrap: true,
         primary: true,
@@ -273,7 +276,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         focusNode: _contentFocusNode,
                         autofocus: false,
                         style: TextStyle(
-                            color: Colors.blueGrey, fontFamily: "songkai"),
+                            color: Colors.blueGrey, fontFamily: "songti"),
                         maxLines: 1,
                         strutStyle: StrutStyle(fontStyle: FontStyle.italic),
                         controller: editController,
@@ -297,6 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     getHomeGsc();
                                   }
                                   editController.text = "";
+                                   _contentFocusNode.unfocus();
                                 }),
                             contentPadding: EdgeInsets.all(8.0))),
                   )),
@@ -337,11 +341,11 @@ class GscDetailScreen extends StatelessWidget {
 
   final TextStyle style = TextStyle(
     height: 1.5,
-    fontFamily: "songkai",
+    fontFamily: "songti",
     fontSize: 18,
   );
   final TextStyle styleTranslation =
-      TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 16);
+      TextStyle(height: 1.5, fontFamily: "songti", fontSize: 16);
 
   final TextStyle styleForeword = TextStyle(
       height: 1.5,
@@ -436,7 +440,7 @@ class GscDetailScreen extends StatelessWidget {
           title: new Text(this.gsc.workTitle),
         ),
         body: Center(
-            //Text(this.gsc.content, style: TextStyle(height: 1.5, fontFamily: "songkai"))
+            //Text(this.gsc.content, style: TextStyle(height: 1.5, fontFamily: "songti"))
             child: ListView(
           padding: EdgeInsets.all(10),
           children: <Widget>[
@@ -597,17 +601,19 @@ class _MyTabBarState extends State<MyTabBar> {
   Widget getContent() {
     return Padding(
         padding: EdgeInsets.only(left: 15, right: 15, top: 0, bottom: 5),
-        child: Text(
-          this.selectContent,
-          style: TextStyle(fontSize: 16, height: 1.4),
-        ));
+        child: Text(this.selectContent,
+            style: TextStyle(
+              fontSize: 17,
+              height: 1.4,
+              fontFamily: "songkai",
+            )));
   }
 
   Widget genIcon(item) {
     if (item == this.selectItem) {
       return Icon(
         Icons.maximize,
-        size: 16,
+        size: 18,
       );
     } else {
       return Icon(Icons.maximize, size: 0);
@@ -622,7 +628,13 @@ class _MyTabBarState extends State<MyTabBar> {
           child: Column(children: <Widget>[
         FlatButton(
             highlightColor: mainColor,
-            child: Text(this.children[i].tabName),
+            child: Text(
+              this.children[i].tabName,
+              style: TextStyle(
+                  fontFamily: "songkai",
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600),
+            ),
             onPressed: () {
               setState(() {
                 selectContent = this.children[i].tabContent;
