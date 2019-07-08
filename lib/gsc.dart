@@ -57,5 +57,8 @@ class Gsc {
     if(this.translation.length > 0){
       this.translation =  "　　" + this.translation.replaceAll(new RegExp(r"\n|\t"), "\n"+ "　　");
     }
+    if(this.foreword.length > 0){
+      this.foreword  = "　　" + this.foreword;
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 
 import 'gsc.dart';
 
@@ -219,7 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getProgressDialog() {
-    return Center(child: new CupertinoActivityIndicator());
+    return Center(child: new CupertinoActivityIndicator(radius: 25,));
   }
 
   @override
@@ -335,6 +336,8 @@ class GscDetailScreen extends StatelessWidget {
   final TextStyle styleTranslation =
       TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 16);
 
+  final TextStyle styleForeword = TextStyle(height: 1.5, fontFamily: "songkai", fontSize: 14, fontStyle: FontStyle.italic);
+
   Widget renderTranslation(Gsc gsc) {
     if (gsc.translation.length > 0) {
       return Text(
@@ -342,7 +345,7 @@ class GscDetailScreen extends StatelessWidget {
         style: styleTranslation,
       );
     } else {
-      return Text("");
+      return new Container(width: 0, height: 0,);
     }
   }
 
@@ -358,6 +361,18 @@ class GscDetailScreen extends StatelessWidget {
         this.gsc.content,
         style: style,
       );
+    }
+  }
+
+  Widget renderForeword(Gsc gsc){
+    if (gsc.foreword.length > 0) {
+      return Text(
+        this.gsc.foreword,
+        style: styleForeword,
+        textAlign: TextAlign.left,
+      );
+    } else {
+      return new Container(width: 0, height: 0,);
     }
   }
 
@@ -393,7 +408,8 @@ class GscDetailScreen extends StatelessWidget {
                     )
                   },
             ),
-            renderContent(this.gsc), // 正文
+            renderForeword(gsc), // foreword
+            renderContent(gsc), // 正文
             Padding(
                 padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
           ],
