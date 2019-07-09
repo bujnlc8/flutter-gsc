@@ -9,6 +9,7 @@ import 'gsc.dart';
 import 'package:flutter/material.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
+const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: backgroundColor,
         primaryColor: mainColor,
       ),
       home: MyHomePage(
@@ -111,86 +112,91 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Future<void> _refresh() async {
+    search(null);
+  }
+
   Widget renderListView() {
     if (this.loading) {
       return getProgressDialog();
     }
-    List<Widget> result = [];
-    for (var i = 0; i < this.gscList.length; i++) {
-      var gsc = this.gscList[i];
-      result.add(new GestureDetector(
-          onTap: () {
-            goToDetail(gsc);
-          },
-          onDoubleTap: () {
-            goToDetail(gsc);
-          },
-          child: Column(
-            children: <Widget>[
-              Flex(direction: Axis.horizontal, children: <Widget>[
-                Expanded(
-                  flex: 3,
+    return RefreshIndicator(
+        displacement: 10,
+        color: mainColor,
+        onRefresh: _refresh,
+        child: ListView.builder(
+            itemCount: gscList.length,
+            itemBuilder: (context, index) {
+              var gsc = gscList[index];
+              return new GestureDetector(
+                  onTap: () {
+                    goToDetail(gsc);
+                  },
+                  onDoubleTap: () {
+                    goToDetail(gsc);
+                  },
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Padding(
-                        padding:
-                            new EdgeInsets.only(left: 16, right: 16, top: 6),
-                        child: Text(
-                          gsc.workTitle,
-                          softWrap: true,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: workTitleStyle,
+                      Flex(direction: Axis.horizontal, children: <Widget>[
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Padding(
+                                padding: new EdgeInsets.only(
+                                    left: 16, right: 16, top: 2),
+                                child: Text(
+                                  gsc.workTitle,
+                                  softWrap: true,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: workTitleStyle,
+                                ),
+                              ),
+                              Padding(
+                                padding: new EdgeInsets.only(
+                                    left: 16, right: 16, top: 4),
+                                child: Text(gsc.shortContent,
+                                    softWrap: true,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: shortContentStyle),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                        Expanded(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: <Widget>[
+                              Padding(
+                                padding: new EdgeInsets.only(right: 16),
+                                child: Text("", style: style),
+                              ),
+                              Padding(
+                                padding: new EdgeInsets.only(right: 16),
+                                child: Text(
+                                    "【" +
+                                        gsc.workDynasty +
+                                        "】" +
+                                        gsc.workAuthor.toString(),
+                                    textAlign: TextAlign.end,
+                                    style: style),
+                              )
+                            ],
+                          ),
+                        )
+                      ]),
                       Padding(
-                        padding:
-                            new EdgeInsets.only(left: 16, right: 16, top: 8),
-                        child: Text(gsc.shortContent,
-                            softWrap: true,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: shortContentStyle),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Padding(
-                        padding: new EdgeInsets.all(8),
-                        child: Text("", style: style),
-                      ),
-                      Padding(
-                        padding: new EdgeInsets.all(8),
-                        child: Text(
-                            "【" +
-                                gsc.workDynasty +
-                                "】" +
-                                gsc.workAuthor.toString(),
-                            textAlign: TextAlign.end,
-                            style: style),
+                        padding: EdgeInsets.only(left: 14, right: 14),
+                        child:
+                            Divider(height: 1.0, indent: 0, color: Colors.grey),
                       )
                     ],
-                  ),
-                )
-              ]),
-              Divider(height: 1.0, indent: 8.0, color: Colors.grey),
-            ],
-          )));
-    }
-    result.add(Padding(
-      padding: EdgeInsets.all(15),
-    ));
-    return ListView(
-        shrinkWrap: true,
-        primary: true,
-        padding: const EdgeInsets.only(left: 0, right: 10, top: 10, bottom: 10),
-        children: result);
+                  ));
+            }));
   }
 
   @override
@@ -205,7 +211,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  void search(searchText) async {
+  search(searchText) async {
     this.gscList = [];
     if (this.loading) {
       return;
@@ -253,12 +259,20 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
+        appBar: PreferredSize(
+            child: new AppBar(
+              elevation: 0,
+              backgroundColor: backgroundColor,
+              brightness: Brightness.light,
+            ),
+            preferredSize: Size.zero),
+        backgroundColor: backgroundColor,
         body: new Align(
             // Center is a layout widget. It takes a single child and positions it
             // in the middle of the parent.
             alignment: Alignment.topLeft,
             child: Padding(
-              padding: EdgeInsets.only(top: 45),
+              padding: EdgeInsets.only(top: 0),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 // Column is also layout widget. It takes a list of children and
@@ -448,47 +462,53 @@ class GscDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+        appBar: PreferredSize(
+            child: new AppBar(
+              elevation: 0,
+              backgroundColor: backgroundColor,
+              brightness: Brightness.light,
+            ),
+            preferredSize: Size.zero),
+        backgroundColor: backgroundColor,
         body: Center(
             //Text(this.gsc.content, style: TextStyle(height: 1.5, fontFamily: "songti"))
             child: ListView(
-      padding: EdgeInsets.only(top: 45, left: 16, right: 16, bottom: 20),
-      children: <Widget>[
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          padding: EdgeInsets.only(top: 0, left: 16, right: 16, bottom: 20),
           children: <Widget>[
-            Text(
-              this.gsc.workTitle,
-              style: style,
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  this.gsc.workTitle,
+                  style: style,
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                renderPlayIcon(gsc)
+              ],
             ),
-            renderPlayIcon(gsc)
+            new GestureDetector(
+              child: Text(
+                "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
+                style: style,
+                textAlign: TextAlign.center,
+              ),
+              onTap: () => {
+                    Navigator.push(
+                      context,
+                      new MaterialPageRoute(
+                          builder: (context) =>
+                              new MyHomePage(title: "i古诗词", gsc: gsc)),
+                    )
+                  },
+            ),
+            renderForeword(gsc), // foreword
+            renderContent(gsc), // 正文
+            renderTabBar(this.gsc),
           ],
-        ),
-        new GestureDetector(
-          child: Text(
-            "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
-            style: style,
-            textAlign: TextAlign.center,
-          ),
-          onTap: () => {
-                Navigator.push(
-                  context,
-                  new MaterialPageRoute(
-                      builder: (context) =>
-                          new MyHomePage(title: "i古诗词", gsc: gsc)),
-                )
-              },
-        ),
-        renderForeword(gsc), // foreword
-        renderContent(gsc), // 正文
-        // Padding(
-        //     padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
-        renderTabBar(this.gsc),
-      ],
-    )));
+        )));
   }
 }
 
@@ -618,11 +638,14 @@ class _MyTabBarState extends State<MyTabBar> {
   Widget genIcon(item) {
     if (item == this.selectItem) {
       return Image(
-            image: AssetImage("assets/line.png"),
-            height: 4.5,
-          );
+        image: AssetImage("assets/line.png"),
+        height: 4.5,
+      );
     } else {
-      return Container(height: 0,width: 0,);
+      return Container(
+        height: 0,
+        width: 0,
+      );
     }
   }
 

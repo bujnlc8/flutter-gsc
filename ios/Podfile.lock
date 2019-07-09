@@ -5,13 +5,13 @@ PODS:
 
 DEPENDENCIES:
   - audioplayer (from `.symlinks/plugins/audioplayer/ios`)
-  - Flutter (from `.symlinks/flutter/ios-release`)
+  - Flutter (from `.symlinks/flutter/ios`)
 
 EXTERNAL SOURCES:
   audioplayer:
     :path: ".symlinks/plugins/audioplayer/ios"
   Flutter:
-    :path: ".symlinks/flutter/ios-release"
+    :path: ".symlinks/flutter/ios"
 
 SPEC CHECKSUMS:
   audioplayer: f4462b84216b9c55f02bbbdc7ab60eec7427b2d4
