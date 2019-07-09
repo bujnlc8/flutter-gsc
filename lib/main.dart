@@ -61,18 +61,50 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Gsc _gsc;
+
+  // 当前选中的项目
+  int currentSelect;
   List<Gsc> gscList = [];
   var loading = false;
-  var style = TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
 
-  var workTitleStyle = TextStyle(
-      height: 1.5,
-      fontSize: 16,
-      fontFamily: "songti",
-      fontWeight: FontWeight.w600);
+  style(i) {
+    if (currentSelect == i) {
+      return TextStyle(
+          height: 1.5,
+          fontSize: 18,
+          fontFamily: "songkai",
+          fontStyle: FontStyle.italic);
+    }
+    return TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
+  }
 
-  var shortContentStyle =
-      TextStyle(height: 1.5, fontSize: 15, fontFamily: "songti");
+  workTitleStyle(i) {
+    if (currentSelect == i) {
+      return TextStyle(
+          height: 1.5,
+          fontSize: 18,
+          fontFamily: "songkai",
+          fontWeight: FontWeight.w600,
+          fontStyle: FontStyle.italic);
+    }
+    return TextStyle(
+        height: 1.5,
+        fontSize: 16,
+        fontFamily: "songti",
+        fontWeight: FontWeight.w600);
+  }
+
+  shortContentStyle(i) {
+    if (i == currentSelect) {
+      return TextStyle(
+          height: 1.5,
+          fontSize: 17,
+          fontFamily: "songkai",
+          fontStyle: FontStyle.italic);
+    } else {
+      return TextStyle(height: 1.5, fontSize: 15, fontFamily: "songti");
+    }
+  }
 
   HttpClient httpClient = new HttpClient();
 
@@ -86,7 +118,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void getHomeGsc() async {
     this.gscList = [];
     this.loading = true;
-    setState(() {});
+    setState(() {
+      currentSelect = -1;
+    });
     HttpClientRequest request =
         await httpClient.getUrl(Uri.parse(this.homeAip));
     request.headers.add("user-agent", "iGsc/0.0.1");
@@ -98,11 +132,16 @@ class _MyHomePageState extends State<MyHomePage> {
       this.gscList.add(Gsc(gscs[i]));
     }
     this.loading = false;
-    setState(() {});
+    setState(() {
+      currentSelect = -1;
+    });
   }
 
   // 跳转到详情
   void goToDetail(int index) {
+    setState(() {
+      currentSelect = index;
+    });
     Navigator.push(
       context,
       new MaterialPageRoute(
@@ -151,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   softWrap: true,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: workTitleStyle,
+                                  style: workTitleStyle(index),
                                 ),
                               ),
                               Padding(
@@ -161,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     softWrap: true,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: shortContentStyle),
+                                    style: shortContentStyle(index)),
                               ),
                             ],
                           ),
@@ -173,10 +212,13 @@ class _MyHomePageState extends State<MyHomePage> {
                             children: <Widget>[
                               Padding(
                                 padding: new EdgeInsets.only(right: 16),
-                                child: (){
-                                    if(gsc.audioId > 0){
-                                      return  Icon(Icons.audiotrack, size: 16,);
-                                    }
+                                child: () {
+                                  if (gsc.audioId > 0) {
+                                    return Icon(
+                                      Icons.audiotrack,
+                                      size: 16,
+                                    );
+                                  }
                                 }(),
                               ),
                               Padding(
@@ -187,7 +229,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         "】" +
                                         gsc.workAuthor.toString(),
                                     textAlign: TextAlign.end,
-                                    style: style),
+                                    style: style(index)),
                               )
                             ],
                           ),
@@ -213,6 +255,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       getHomeGsc();
     }
+    currentSelect = -1;
     super.initState();
   }
 
@@ -222,7 +265,9 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
     this.loading = true;
-    setState(() {});
+    setState(() {
+      currentSelect = -1;
+    });
     var inputText;
     if (searchText == null) {
       inputText = this.editController.text.trim();
@@ -245,7 +290,9 @@ class _MyHomePageState extends State<MyHomePage> {
       this.gscList.add(Gsc(gscs[i]));
     }
     this.loading = false;
-    setState(() {});
+    setState(() {
+      currentSelect = -1;
+    });
   }
 
   getProgressDialog() {
@@ -415,21 +462,24 @@ class GscDetailScreenState extends State<GscDetailScreen> {
         textAlign: TextAlign.center,
       );
     }
-    return GestureDetector(child: text, 
-    onDoubleTap: (){ // 双击回到上一首
-          if(index == 0){
-            index = gscs.length -1;
-          }else{
-            index -=1;
-          }
-          setState(() {
-            index = index;
-            gsc=gscs[index];
-          });
-    },
-    onLongPressEnd: (e){ // 长按截图
-      print(e);
-    },
+    return GestureDetector(
+      child: text,
+      onDoubleTap: () {
+        // 双击回到上一首
+        if (index == 0) {
+          index = gscs.length - 1;
+        } else {
+          index -= 1;
+        }
+        setState(() {
+          index = index;
+          gsc = gscs[index];
+        });
+      },
+      onLongPressEnd: (e) {
+        // 长按截图
+        print(e);
+      },
     );
   }
 
@@ -554,7 +604,6 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 }
 
 class PlayAudioWidget extends StatefulWidget {
-  
   final String playUrl;
 
   @override
@@ -562,8 +611,9 @@ class PlayAudioWidget extends StatefulWidget {
     return new _PlayAudioWidgetState();
   }
 
-  PlayAudioWidget({Key key, @required this.playUrl}) : 
-    assert(playUrl.length > 0),super(key: key);
+  PlayAudioWidget({Key key, @required this.playUrl})
+      : assert(playUrl.length > 0),
+        super(key: key);
 }
 
 class _PlayAudioWidgetState extends State<PlayAudioWidget> {
@@ -576,16 +626,16 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
   final AudioPlayer audioPlayer = new AudioPlayer();
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     isPlaying = false;
     playUrl = this.widget.playUrl;
   }
 
   @override
-  void didUpdateWidget (PlayAudioWidget oldWidget) {
+  void didUpdateWidget(PlayAudioWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if(playUrl != this.widget.playUrl){
+    if (playUrl != this.widget.playUrl) {
       audioPlayer.pause();
       setState(() {
         isPlaying = false;
@@ -593,7 +643,7 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
       });
     }
   }
-  
+
   _PlayAudioWidgetState() {
     audioPlayer.onPlayerStateChanged.listen((onData) {
       if (onData == AudioPlayerState.STOPPED) {
