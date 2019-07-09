@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:audioplayer/audioplayer.dart';
 
@@ -104,11 +105,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // 跳转到详情
-  void goToDetail(Gsc gsc) {
+  void goToDetail(int index) {
     Navigator.push(
       context,
       new MaterialPageRoute(
-          builder: (context) => new GscDetailScreen(gsc: gsc)),
+          builder: (context) =>
+              new GscDetailScreen(gscs: this.gscList, index: index)),
     );
   }
 
@@ -123,6 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return RefreshIndicator(
         displacement: 10,
         color: mainColor,
+        backgroundColor: backgroundColor,
         onRefresh: _refresh,
         child: ListView.builder(
             itemCount: gscList.length,
@@ -130,10 +133,10 @@ class _MyHomePageState extends State<MyHomePage> {
               var gsc = gscList[index];
               return new GestureDetector(
                   onTap: () {
-                    goToDetail(gsc);
+                    goToDetail(index);
                   },
                   onDoubleTap: () {
-                    goToDetail(gsc);
+                    goToDetail(index);
                   },
                   child: Column(
                     children: <Widget>[
@@ -192,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Padding(
                         padding: EdgeInsets.only(left: 14, right: 14),
                         child:
-                            Divider(height: 1.0, indent: 0, color: Colors.grey),
+                            Divider(height: 5.0, indent: 0, color: Colors.grey),
                       )
                     ],
                   ));
@@ -296,7 +299,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                           child: Padding(
                         padding: const EdgeInsets.only(
-                            left: 10, right: 0, top: 10, bottom: 0),
+                            left: 16, right: 0, top: 10, bottom: 0),
                         child: TextFormField(
                             focusNode: _contentFocusNode,
                             autofocus: false,
@@ -313,7 +316,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             },
                             decoration: InputDecoration(
                                 border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
+                                    borderRadius: BorderRadius.circular(25.0),
                                     borderSide: BorderSide(color: mainColor)),
                                 isDense: false,
                                 hintText: '请输入搜索内容',
@@ -327,7 +330,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       editController.text = "";
                                       _contentFocusNode.unfocus();
                                     }),
-                                contentPadding: EdgeInsets.all(8.0))),
+                                contentPadding: EdgeInsets.all(12.0))),
                       )),
                       IconButton(
                           icon: Icon(Icons.search),
@@ -360,10 +363,31 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class GscDetailScreen extends StatelessWidget {
-  final Gsc gsc;
+class GscDetailScreen extends StatefulWidget {
+  final List<Gsc> gscs;
+  final int index;
 
-  GscDetailScreen({Key key, this.gsc}) : super(key: key);
+  GscDetailScreen({Key key, this.gscs, this.index}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    return GscDetailScreenState(gscs: gscs, index: index);
+  }
+}
+
+class GscDetailScreenState extends State<GscDetailScreen> {
+  List<Gsc> gscs;
+  int index;
+  Gsc gsc;
+
+  GscDetailScreenState({this.gscs, this.index});
+
+  @override
+  void initState() {
+    index = index;
+    gsc = gscs[index];
+    super.initState();
+  }
 
   final TextStyle style = TextStyle(
     height: 1.5,
@@ -379,39 +403,37 @@ class GscDetailScreen extends StatelessWidget {
       fontSize: 14,
       fontStyle: FontStyle.italic);
 
-  Widget renderTranslation(Gsc gsc) {
-    if (gsc.translation.length > 0) {
-      return Text(
-        "\n【翻译】\n" + this.gsc.translation,
-        style: styleTranslation,
-      );
-    } else {
-      return new Container(
-        width: 0,
-        height: 0,
-      );
-    }
-  }
-
-  Widget renderContent(Gsc gsc) {
+  Widget renderContent() {
+    var text = Text(gsc.content, style: style);
     if (gsc.layout == "center") {
-      return Text(
-        this.gsc.content,
+      text = Text(
+        gsc.content,
         style: style,
         textAlign: TextAlign.center,
       );
-    } else {
-      return Text(
-        this.gsc.content,
-        style: style,
-      );
     }
+    return GestureDetector(child: text, 
+    onDoubleTap: (){ // 双击回到上一首
+          if(index == 0){
+            index = gscs.length -1;
+          }else{
+            index -=1;
+          }
+          setState(() {
+            index = index;
+            gsc=gscs[index];
+          });
+    },
+    onLongPressEnd: (e){ // 长按截图
+      print(e);
+    },
+    );
   }
 
-  Widget renderForeword(Gsc gsc) {
+  Widget renderForeword() {
     if (gsc.foreword.length > 0) {
       return Text(
-        this.gsc.foreword,
+        gsc.foreword,
         style: styleForeword,
         textAlign: TextAlign.left,
       );
@@ -423,7 +445,7 @@ class GscDetailScreen extends StatelessWidget {
     }
   }
 
-  Widget renderPlayIcon(Gsc gsc) {
+  Widget renderPlayIcon() {
     if (gsc.audioId > 0) {
       return PlayAudioWidget(playUrl: gsc.playUrl);
     }
@@ -433,7 +455,7 @@ class GscDetailScreen extends StatelessWidget {
     );
   }
 
-  renderTabBar(Gsc gsc) {
+  renderTabBar() {
     var result = <MyTabItem>[];
     if (gsc.intro.length > 0) {
       result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
@@ -459,6 +481,18 @@ class GscDetailScreen extends StatelessWidget {
     return MyTabBar(children: result);
   }
 
+  Future<void> _refresh() async {
+    if (index == gscs.length - 1) {
+      index = 0;
+    } else {
+      index += 1;
+    }
+    setState(() {
+      index = index;
+      gsc = gscs[index];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -471,44 +505,48 @@ class GscDetailScreen extends StatelessWidget {
             preferredSize: Size.zero),
         backgroundColor: backgroundColor,
         body: Center(
-            //Text(this.gsc.content, style: TextStyle(height: 1.5, fontFamily: "songti"))
-            child: ListView(
-          padding: EdgeInsets.only(top: 0, left: 16, right: 16, bottom: 20),
-          children: <Widget>[
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  this.gsc.workTitle,
-                  style: style,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                renderPlayIcon(gsc)
-              ],
-            ),
-            new GestureDetector(
-              child: Text(
-                "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
-                style: style,
-                textAlign: TextAlign.center,
-              ),
-              onTap: () => {
-                    Navigator.push(
-                      context,
-                      new MaterialPageRoute(
-                          builder: (context) =>
-                              new MyHomePage(title: "i古诗词", gsc: gsc)),
-                    )
-                  },
-            ),
-            renderForeword(gsc), // foreword
-            renderContent(gsc), // 正文
-            renderTabBar(this.gsc),
-          ],
-        )));
+            child: RefreshIndicator(
+                onRefresh: _refresh,
+                backgroundColor: backgroundColor,
+                color: mainColor,
+                child: ListView(
+                  padding:
+                      EdgeInsets.only(top: 0, left: 16, right: 16, bottom: 20),
+                  children: <Widget>[
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          gsc.workTitle,
+                          style: style,
+                          textAlign: TextAlign.center,
+                          maxLines: 3,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        renderPlayIcon()
+                      ],
+                    ),
+                    new GestureDetector(
+                      child: Text(
+                        "【" + gsc.workDynasty + "】" + gsc.workAuthor,
+                        style: style,
+                        textAlign: TextAlign.center,
+                      ),
+                      onTap: () => {
+                            Navigator.push(
+                              context,
+                              new MaterialPageRoute(
+                                  builder: (context) =>
+                                      new MyHomePage(title: "i古诗词", gsc: gsc)),
+                            )
+                          },
+                    ),
+                    renderForeword(), // foreword
+                    renderContent(), // 正文
+                    renderTabBar(),
+                  ],
+                ))));
   }
 }
 
@@ -613,6 +651,8 @@ class _MyTabBarState extends State<MyTabBar> {
 
   String selectItem;
 
+  int currentIndex;
+
   _MyTabBarState(children) {
     this.children = children;
   }
@@ -622,21 +662,47 @@ class _MyTabBarState extends State<MyTabBar> {
     super.initState();
     selectContent = this.children[0].tabContent;
     selectItem = this.children[0].tabName;
+    currentIndex = 0;
   }
 
   Widget getContent() {
     return Padding(
-        padding: EdgeInsets.only(left: 15, right: 15, top: 0, bottom: 5),
-        child: Text(this.selectContent,
-            style: TextStyle(
-              fontSize: 17,
-              height: 1.4,
-              fontFamily: "songkai",
-            )));
+      padding: EdgeInsets.only(left: 15, right: 15, top: 0, bottom: 5),
+      child: GestureDetector(
+          onHorizontalDragEnd: (e) {
+            var tabNum = this.children.length;
+            if (e.primaryVelocity < 0) {
+              // 向左, 切换到下一个tab, 如果是最后一个， 切换到第一个
+              if (currentIndex < tabNum - 1) {
+                currentIndex += 1;
+              } else if (currentIndex == tabNum - 1) {
+                currentIndex = 0;
+              }
+            } else {
+              // 向右，切换到上一个，如果是第一个，切换到最后一个
+              if (currentIndex == 0) {
+                currentIndex = tabNum - 1;
+              } else {
+                currentIndex -= 1;
+              }
+            }
+            setState(() {
+              selectContent = this.children[currentIndex].tabContent;
+              selectItem = this.children[currentIndex].tabName;
+              currentIndex = currentIndex;
+            });
+          },
+          child: Text(this.selectContent,
+              style: TextStyle(
+                fontSize: 17,
+                height: 1.4,
+                fontFamily: "songkai",
+              ))),
+    );
   }
 
   Widget genIcon(item) {
-    if (item == this.selectItem) {
+    if (item == currentIndex) {
       return Image(
         image: AssetImage("assets/line.png"),
         height: 4.5,
@@ -669,9 +735,10 @@ class _MyTabBarState extends State<MyTabBar> {
               setState(() {
                 selectContent = this.children[i].tabContent;
                 selectItem = this.children[i].tabName;
+                currentIndex = i;
               });
             }),
-        genIcon(this.children[i].tabName),
+        genIcon(i),
       ])));
     }
     if (result.length < 5) {
