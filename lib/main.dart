@@ -56,14 +56,11 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState(gsc);
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   Gsc _gsc;
-  _MyHomePageState(gsc) {
-    this._gsc = gsc;
-  }
   List<Gsc> gscList = [];
   var loading = false;
   var style = TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
@@ -176,7 +173,11 @@ class _MyHomePageState extends State<MyHomePage> {
                             children: <Widget>[
                               Padding(
                                 padding: new EdgeInsets.only(right: 16),
-                                child: Text("", style: style),
+                                child: (){
+                                    if(gsc.audioId > 0){
+                                      return  Icon(Icons.audiotrack, size: 16,);
+                                    }
+                                }(),
                               ),
                               Padding(
                                 padding: new EdgeInsets.only(right: 16),
@@ -205,6 +206,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     // 初始化获取gsc
+    this._gsc = this.widget.gsc;
     if (this._gsc != null) {
       editController.text = this._gsc.workAuthor;
       search(this._gsc.workAuthor);
@@ -371,8 +373,8 @@ class GscDetailScreen extends StatefulWidget {
   GscDetailScreen({Key key, this.gscs, this.index}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() {
-    return GscDetailScreenState(gscs: gscs, index: index);
+  GscDetailScreenState createState() {
+    return GscDetailScreenState();
   }
 }
 
@@ -381,10 +383,10 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   int index;
   Gsc gsc;
 
-  GscDetailScreenState({this.gscs, this.index});
-
   @override
   void initState() {
+    this.gscs = this.widget.gscs;
+    this.index = this.widget.index;
     index = index;
     gsc = gscs[index];
     super.initState();
@@ -552,33 +554,57 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 }
 
 class PlayAudioWidget extends StatefulWidget {
+  
   final String playUrl;
 
   @override
-  State<StatefulWidget> createState() {
-    return new _PlayAudioWidgetState(this.playUrl);
+  _PlayAudioWidgetState createState() {
+    return new _PlayAudioWidgetState();
   }
 
-  PlayAudioWidget({Key key, this.playUrl}) : super(key: key);
+  PlayAudioWidget({Key key, @required this.playUrl}) : 
+    assert(playUrl.length > 0),super(key: key);
 }
 
-class _PlayAudioWidgetState extends State<StatefulWidget> {
+class _PlayAudioWidgetState extends State<PlayAudioWidget> {
   // 是否在播放
-  bool isPlaying = false;
+  bool isPlaying;
+
   // 播放链接
-  String playUrl = "";
+  String playUrl;
 
   final AudioPlayer audioPlayer = new AudioPlayer();
-  _PlayAudioWidgetState(playUrl) {
-    this.playUrl = playUrl;
+
+  @override
+  void initState(){
+    super.initState();
+    isPlaying = false;
+    playUrl = this.widget.playUrl;
+  }
+
+  @override
+  void didUpdateWidget (PlayAudioWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if(playUrl != this.widget.playUrl){
+      audioPlayer.pause();
+      setState(() {
+        isPlaying = false;
+        playUrl = this.widget.playUrl;
+      });
+    }
+  }
+  
+  _PlayAudioWidgetState() {
     audioPlayer.onPlayerStateChanged.listen((onData) {
       if (onData == AudioPlayerState.STOPPED) {
         setState(() {
+          playUrl = this.widget.playUrl;
           isPlaying = false;
         });
       }
     }, onError: (msg) {
       setState(() {
+        playUrl = this.widget.playUrl;
         isPlaying = false;
       });
       debugPrint(msg);
@@ -587,19 +613,19 @@ class _PlayAudioWidgetState extends State<StatefulWidget> {
 
   void togglePlaying() async {
     if (!isPlaying) {
-      debugPrint(this.playUrl);
-      await audioPlayer.play(this.playUrl);
+      await audioPlayer.play(this.widget.playUrl);
     } else {
       await audioPlayer.pause();
     }
     setState(() {
       isPlaying = !isPlaying;
+      playUrl = this.widget.playUrl;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (this.isPlaying) {
+    if (isPlaying) {
       return IconButton(
           icon: Icon(Icons.pause),
           padding: EdgeInsets.only(left: 8, top: 14, right: 8, bottom: 8),
@@ -637,7 +663,7 @@ class MyTabBar extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return new _MyTabBarState(children);
+    return new _MyTabBarState();
   }
 
   MyTabBar({Key key, this.children})
@@ -654,13 +680,10 @@ class _MyTabBarState extends State<MyTabBar> {
 
   int currentIndex;
 
-  _MyTabBarState(children) {
-    this.children = children;
-  }
-
   @override
   void initState() {
     super.initState();
+    this.children = this.widget.children;
     selectContent = this.children[0].tabContent;
     selectItem = this.children[0].tabName;
     currentIndex = 0;
