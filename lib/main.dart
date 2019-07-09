@@ -301,6 +301,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         padding: const EdgeInsets.only(
                             left: 16, right: 0, top: 10, bottom: 0),
                         child: TextFormField(
+                            cursorColor: mainColor,
                             focusNode: _contentFocusNode,
                             autofocus: false,
                             style: TextStyle(
