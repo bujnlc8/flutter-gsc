@@ -16,20 +16,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'i古诗词',
+      // title: 'i古诗词',
       theme: ThemeData(
-          // This is the theme of your application.
-          //
-          // Try running your application with "flutter run". You'll see the
-          // application has a blue toolbar. Then, without quitting the app, try
-          // changing the primarySwatch below to Colors.green and then invoke
-          // "hot reload" (press "r" in the console where you ran "flutter run",
-          // or simply save your changes to "hot reload" in a Flutter IDE).
-          // Notice that the counter didn't reset back to zero; the application
-          // is not restarted.
-          primaryColor: mainColor),
+        // This is the theme of your application.
+        //
+        // Try running your application with "flutter run". You'll see the
+        // application has a blue toolbar. Then, without quitting the app, try
+        // changing the primarySwatch below to Colors.green and then invoke
+        // "hot reload" (press "r" in the console where you ran "flutter run",
+        // or simply save your changes to "hot reload" in a Flutter IDE).
+        // Notice that the counter didn't reset back to zero; the application
+        // is not restarted.
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        primaryColor: mainColor,
+      ),
       home: MyHomePage(
-        title: 'i古诗词',
+        //title: 'i古诗词',
         gsc: null,
       ),
     );
@@ -64,6 +66,15 @@ class _MyHomePageState extends State<MyHomePage> {
   var loading = false;
   var style = TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
 
+  var workTitleStyle = TextStyle(
+      height: 1.5,
+      fontSize: 16,
+      fontFamily: "songti",
+      fontWeight: FontWeight.w600);
+
+  var shortContentStyle =
+      TextStyle(height: 1.5, fontSize: 15, fontFamily: "songti");
+
   HttpClient httpClient = new HttpClient();
 
   final homeAip = "https://igsc.wx.haihui.site/songci/index/all/b";
@@ -95,7 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void goToDetail(Gsc gsc) {
     Navigator.push(
       context,
-      new MaterialPageRoute(builder: (context) => new GscDetailScreen(gsc)),
+      new MaterialPageRoute(
+          builder: (context) => new GscDetailScreen(gsc: gsc)),
     );
   }
 
@@ -117,33 +129,35 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               Flex(direction: Axis.horizontal, children: <Widget>[
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Padding(
-                        padding: new EdgeInsets.all(8),
+                        padding:
+                            new EdgeInsets.only(left: 16, right: 16, top: 6),
                         child: Text(
                           gsc.workTitle,
                           softWrap: true,
-                          maxLines: 4,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: style,
+                          style: workTitleStyle,
                         ),
                       ),
                       Padding(
-                        padding: new EdgeInsets.all(8),
+                        padding:
+                            new EdgeInsets.only(left: 16, right: 16, top: 8),
                         child: Text(gsc.shortContent,
                             softWrap: true,
-                            maxLines: 4,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: style),
+                            style: shortContentStyle),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
-                  flex: 1,
+                  flex: 2,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: <Widget>[
@@ -239,105 +253,103 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text(widget.title),
-        ),
         body: new Align(
-          // Center is a layout widget. It takes a single child and positions it
-          // in the middle of the parent.
-          alignment: Alignment.topLeft,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            // Column is also layout widget. It takes a list of children and
-            // arranges them vertically. By default, it sizes itself to fit its
-            // children horizontally, and tries to be as tall as its parent.
-            //
-            // Invoke "debug painting" (press "p" in the console, choose the
-            // "Toggle Debug Paint" action from the Flutter Inspector in Android
-            // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-            // to see the wireframe for each widget.
-            //
-            // Column has various properties to control how it sizes itself and
-            // how it positions its children. Here we use mainAxisAlignment to
-            // center the children vertically; the main axis here is the vertical
-            // axis because Columns are vertical (the cross axis would be
-            // horizontal).
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
+            // Center is a layout widget. It takes a single child and positions it
+            // in the middle of the parent.
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: EdgeInsets.only(top: 45),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                // Column is also layout widget. It takes a list of children and
+                // arranges them vertically. By default, it sizes itself to fit its
+                // children horizontally, and tries to be as tall as its parent.
+                //
+                // Invoke "debug painting" (press "p" in the console, choose the
+                // "Toggle Debug Paint" action from the Flutter Inspector in Android
+                // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+                // to see the wireframe for each widget.
+                //
+                // Column has various properties to control how it sizes itself and
+                // how it positions its children. Here we use mainAxisAlignment to
+                // center the children vertically; the main axis here is the vertical
+                // axis because Columns are vertical (the cross axis would be
+                // horizontal).
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Expanded(
-                      child: Padding(
-                    padding: const EdgeInsets.only(
-                        left: 10, right: 0, top: 10, bottom: 0),
-                    child: TextFormField(
-                        focusNode: _contentFocusNode,
-                        autofocus: false,
-                        style: TextStyle(
-                            color: Colors.blueGrey, fontFamily: "songti"),
-                        maxLines: 1,
-                        strutStyle: StrutStyle(fontStyle: FontStyle.italic),
-                        controller: editController,
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.search,
-                        onEditingComplete: () {
-                          _contentFocusNode.unfocus();
-                          search(null);
-                        },
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                                borderSide: BorderSide(color: mainColor)),
-                            isDense: false,
-                            hintText: '请输入搜索内容',
-                            suffixIcon: IconButton(
-                                iconSize: 18,
-                                icon: Icon(Icons.clear),
-                                onPressed: () {
-                                  if (editController.text.trim() != "") {
-                                    getHomeGsc();
-                                  }
-                                  editController.text = "";
-                                   _contentFocusNode.unfocus();
-                                }),
-                            contentPadding: EdgeInsets.all(8.0))),
-                  )),
-                  IconButton(
-                      icon: Icon(Icons.search),
-                      onPressed: () {
-                        _contentFocusNode.unfocus();
-                        search(null);
-                      },
-                      padding: const EdgeInsets.only(
-                          left: 0, right: 0, top: 10, bottom: 0)),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                          child: Padding(
+                        padding: const EdgeInsets.only(
+                            left: 10, right: 0, top: 10, bottom: 0),
+                        child: TextFormField(
+                            focusNode: _contentFocusNode,
+                            autofocus: false,
+                            style: TextStyle(
+                                color: Colors.blueGrey, fontFamily: "songti"),
+                            maxLines: 1,
+                            strutStyle: StrutStyle(fontStyle: FontStyle.italic),
+                            controller: editController,
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.search,
+                            onEditingComplete: () {
+                              _contentFocusNode.unfocus();
+                              search(null);
+                            },
+                            decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                    borderSide: BorderSide(color: mainColor)),
+                                isDense: false,
+                                hintText: '请输入搜索内容',
+                                suffixIcon: IconButton(
+                                    iconSize: 18,
+                                    icon: Icon(Icons.clear),
+                                    onPressed: () {
+                                      if (editController.text.trim() != "") {
+                                        getHomeGsc();
+                                      }
+                                      editController.text = "";
+                                      _contentFocusNode.unfocus();
+                                    }),
+                                contentPadding: EdgeInsets.all(8.0))),
+                      )),
+                      IconButton(
+                          icon: Icon(Icons.search),
+                          onPressed: () {
+                            _contentFocusNode.unfocus();
+                            search(null);
+                          },
+                          padding: const EdgeInsets.only(
+                              left: 0, right: 0, top: 10, bottom: 0)),
+                    ],
+                  ),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 16, top: 10, bottom: 0),
+                          child: Text(
+                            "搜索结果({num})".replaceAll(
+                                "{num}", this.gscList.length.toString()),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                        )
+                      ]),
+                  Expanded(child: renderListView())
                 ],
               ),
-              Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(
-                          left: 10, right: 10, top: 10, bottom: 0),
-                      child: Text(
-                        "搜索结果({num})".replaceAll(
-                            "{num}", this.gscList.length.toString()),
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    )
-                  ]),
-              Expanded(child: renderListView())
-            ],
-          ),
-        ));
+            )));
   }
 }
 
 class GscDetailScreen extends StatelessWidget {
   final Gsc gsc;
 
-  GscDetailScreen(this.gsc);
+  GscDetailScreen({Key key, this.gsc}) : super(key: key);
 
   final TextStyle style = TextStyle(
     height: 1.5,
@@ -410,19 +422,19 @@ class GscDetailScreen extends StatelessWidget {
   renderTabBar(Gsc gsc) {
     var result = <MyTabItem>[];
     if (gsc.intro.length > 0) {
-      result.add(MyTabItem("评析", gsc.intro));
+      result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
     }
     if (gsc.annotation.length > 0) {
-      result.add(MyTabItem("注释", gsc.annotation));
+      result.add(MyTabItem(tabName: "注释", tabContent: gsc.annotation));
     }
     if (gsc.translation.length > 0) {
-      result.add(MyTabItem("译文", gsc.translation));
+      result.add(MyTabItem(tabName: "译文", tabContent: gsc.translation));
     }
     if (gsc.appreciation.length > 0) {
-      result.add(MyTabItem("赏析", gsc.appreciation));
+      result.add(MyTabItem(tabName: "赏析", tabContent: gsc.appreciation));
     }
     if (gsc.masterComment.length > 0) {
-      result.add(MyTabItem("辑评", gsc.masterComment));
+      result.add(MyTabItem(tabName: "辑评", tabContent: gsc.masterComment));
     }
     if (result.length == 0) {
       return new Container(
@@ -430,56 +442,53 @@ class GscDetailScreen extends StatelessWidget {
         height: 0,
       );
     }
-    return MyTabBar(result);
+    return MyTabBar(children: result);
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: new AppBar(
-          title: new Text(this.gsc.workTitle),
-        ),
         body: Center(
             //Text(this.gsc.content, style: TextStyle(height: 1.5, fontFamily: "songti"))
             child: ListView(
-          padding: EdgeInsets.all(10),
+      padding: EdgeInsets.only(top: 45, left: 16, right: 16, bottom: 20),
+      children: <Widget>[
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  this.gsc.workTitle,
-                  style: style,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                renderPlayIcon(gsc)
-              ],
+            Text(
+              this.gsc.workTitle,
+              style: style,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
             ),
-            new GestureDetector(
-              child: Text(
-                "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
-                style: style,
-                textAlign: TextAlign.center,
-              ),
-              onTap: () => {
-                    Navigator.push(
-                      context,
-                      new MaterialPageRoute(
-                          builder: (context) =>
-                              new MyHomePage(title: "i古诗词", gsc: gsc)),
-                    )
-                  },
-            ),
-            renderForeword(gsc), // foreword
-            renderContent(gsc), // 正文
-            // Padding(
-            //     padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
-            renderTabBar(this.gsc),
+            renderPlayIcon(gsc)
           ],
-        )));
+        ),
+        new GestureDetector(
+          child: Text(
+            "【" + this.gsc.workDynasty + "】" + this.gsc.workAuthor,
+            style: style,
+            textAlign: TextAlign.center,
+          ),
+          onTap: () => {
+                Navigator.push(
+                  context,
+                  new MaterialPageRoute(
+                      builder: (context) =>
+                          new MyHomePage(title: "i古诗词", gsc: gsc)),
+                )
+              },
+        ),
+        renderForeword(gsc), // foreword
+        renderContent(gsc), // 正文
+        // Padding(
+        //     padding: EdgeInsets.all(8), child: renderTranslation(this.gsc)),
+        renderTabBar(this.gsc),
+      ],
+    )));
   }
 }
 
@@ -546,38 +555,35 @@ class _PlayAudioWidgetState extends State<StatefulWidget> {
 }
 
 class MyTabItem extends StatelessWidget {
-  // tab名称
-  String tabName;
-  // tab内容
-  String tabContent;
+  final String tabName;
+  final String tabContent;
 
-  MyTabItem(tabName, tabContent, {Key key}) {
-    this.tabName = tabName;
-    this.tabContent = tabContent;
-  }
+  const MyTabItem({Key key, @required this.tabName, @required this.tabContent})
+      : assert(tabName.length > 0),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(this.tabName),
-          Text(this.tabContent),
+          Text(tabName),
+          Text(tabContent),
         ]);
   }
 }
 
 class MyTabBar extends StatefulWidget {
-  List<MyTabItem> children;
+  final List<MyTabItem> children;
 
   @override
   State<StatefulWidget> createState() {
-    return new _MyTabBarState(this.children);
+    return new _MyTabBarState(children);
   }
 
-  MyTabBar(List<MyTabItem> children) {
-    this.children = children;
-  }
+  MyTabBar({Key key, this.children})
+      : assert(children.length > 0),
+        super(key: key);
 }
 
 class _MyTabBarState extends State<MyTabBar> {
@@ -611,12 +617,12 @@ class _MyTabBarState extends State<MyTabBar> {
 
   Widget genIcon(item) {
     if (item == this.selectItem) {
-      return Icon(
-        Icons.maximize,
-        size: 18,
-      );
+      return Image(
+            image: AssetImage("assets/line.png"),
+            height: 4.5,
+          );
     } else {
-      return Icon(Icons.maximize, size: 0);
+      return Container(height: 0,width: 0,);
     }
   }
 
@@ -630,6 +636,7 @@ class _MyTabBarState extends State<MyTabBar> {
             highlightColor: mainColor,
             child: Text(
               this.children[i].tabName,
+              maxLines: 1,
               style: TextStyle(
                   fontFamily: "songkai",
                   fontSize: 17,

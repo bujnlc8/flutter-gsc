@@ -41,7 +41,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/icon@5x.png
+    - assets/line.png
   fonts:
     - family: songkai
       fonts:
