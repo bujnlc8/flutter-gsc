@@ -430,7 +430,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                       if (editController.text.trim() != "") {
                                         getHomeGsc();
                                       }
-                                      editController.text = "";
+                                      //editController.text = "";
+                                      editController.clear();
                                       _contentFocusNode.unfocus();
                                     }),
                                 contentPadding: EdgeInsets.all(12.0))),
