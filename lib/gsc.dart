@@ -1,3 +1,5 @@
+import 'package:sqflite/sqflite.dart';
+
 class Gsc {
   int id;
   int audioId;
@@ -14,6 +16,7 @@ class Gsc {
   String playUrl;
   String masterComment;
   String annotation;
+  int like = 0;
 
   void setShortContent() {
     // 句号
@@ -83,5 +86,108 @@ class Gsc {
       this.playUrl = "https://songci.nos-eastchina1.126.net/audio/{}.m4a"
           .replaceAll("{}", this.audioId.toString());
     }
+    this.isLiked();
+  }
+
+  isLiked() async {
+    if (dB.db == null) {
+      await dB.initDb();
+    }
+    var maps =
+        await dB.query("gsc_like", ["id"], "id = ? and `like` = 1", [this.id]);
+    if (maps.length > 0) {
+      this.like = 1;
+    } else {
+      this.like = 0;
+    }
+    return like;
+  }
+
+  toLike() async {
+    if (dB.db == null) {
+      await dB.initDb();
+    }
+    var map = this.toMap();
+    map["like"] = 1;
+    await dB.insert("gsc_like", map);
+  }
+
+  disLike() async {
+    if (dB.db == null) {
+      await dB.initDb();
+    }
+    await dB.delete("gsc_like", this.id);
+  }
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>{};
+    map["id"] = this.id;
+    map["audio_id"] = this.audioId;
+    map["work_title"] = this.workTitle;
+    map["work_author"] = this.workAuthor;
+    map["work_dynasty"] = this.workDynasty;
+    map["content"] = this.content;
+    map["appreciation"] = this.appreciation;
+    map["master_comment"] = this.masterComment;
+    map["translation"] = this.translation;
+    map["annotation"] = this.annotation;
+    map["foreword"] = this.foreword;
+    map["intro"] = this.intro;
+    map["layout"] = this.layout;
+    return map;
   }
 }
+
+class MyDb {
+  Database db;
+  initDb() async {
+    db = await openDatabase("gsc_like.db", version: 1,
+        onCreate: (Database db, int version) async {
+      await db.transaction((tx) async {
+        await tx.execute("""
+            CREATE TABLE `gsc_like`( 
+            `id` integer NOT NULL,
+            `work_title` varchar(512) NOT NULL DEFAULT '',
+            `work_author` varchar(512) not NULL DEFAULT '',
+            `work_dynasty` varchar(32) NOT NULL DEFAULT '',
+            `content` text NOT NULL default '',
+            `translation` text NOT NULL default '',
+            `intro` text,
+            `baidu_wiki` varchar(256) default '',
+            `audio_id` integer not null default 0,
+            `foreword` text,
+            `annotation` text ,
+            `appreciation` text ,
+            `master_comment` text ,
+            `layout` varchar(10) DEFAULT 'indent', 
+            `like` tinyint not null default 0);
+            """);
+      });
+    });
+  }
+
+  Future<int> insert(String tableName, Map<String, dynamic> map) async {
+    return await db.insert(tableName, map);
+  }
+
+  Future<int> delete(String tableName, int id) async {
+    return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map>> query(
+    String tableName,
+    List<String> columns,
+    String where,
+    List<dynamic> whereArgs,
+  ) async {
+    List<Map> maps = await db.query(tableName,
+        columns: columns, where: where, whereArgs: whereArgs);
+    return maps;
+  }
+
+  MyDb() {
+    initDb();
+  }
+}
+
+MyDb dB = new MyDb();

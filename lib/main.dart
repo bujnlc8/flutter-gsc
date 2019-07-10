@@ -508,6 +508,35 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     );
   }
 
+  Widget renderLikeIcon() {
+    if (gsc.like > 0) {
+      return GestureDetector(
+        child: Icon(
+          Icons.favorite,
+          color: Colors.redAccent,
+          size: 25,
+        ),
+        onTap: () {
+          gsc.disLike();
+          gsc.like = 0;
+          setState(() {});
+        },
+      );
+    }
+    return GestureDetector(
+      child: Icon(
+        Icons.favorite,
+        color: Colors.grey,
+        size: 18,
+      ),
+      onTap: () {
+        gsc.toLike();
+        gsc.like = 1;
+        setState(() {});
+      },
+    );
+  }
+
   renderTabBar() {
     var result = <MyTabItem>[];
     if (gsc.intro.length > 0) {
@@ -577,7 +606,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        renderPlayIcon()
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            renderPlayIcon(),
+                            renderLikeIcon()
+                          ],
+                        )
                       ],
                     ),
                     new GestureDetector(
