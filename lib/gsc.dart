@@ -85,6 +85,7 @@ class Gsc {
           .replaceAll("{}", this.audioId.toString());
     }
     this.isLiked();
+    this.workTitle = this.workTitle.replaceAll("/", "∙");
   }
 
   isLiked() async {

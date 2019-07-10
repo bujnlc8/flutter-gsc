@@ -63,6 +63,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final searchHistoryKey = "__search_history__";
+
   Gsc _gsc;
   bool searchLike;
   bool loading;
@@ -70,14 +72,15 @@ class _MyHomePageState extends State<MyHomePage> {
   // 当前选中的项目
   int currentSelect;
   List<Gsc> gscList;
+  List<String> _searchHistory;
 
   @override
   void initState() {
-    // 初始化获取gsc
     _gsc = widget.gsc;
     searchLike = false;
     loading = false;
     gscList = [];
+    _searchHistory = [];
     if (_gsc != null) {
       if (widget.from == "author") {
         editController.text = _gsc.workAuthor;
@@ -90,6 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
       getHomeGsc();
     }
     currentSelect = -1;
+    getSearchHistory();
     super.initState();
   }
 
@@ -156,11 +160,12 @@ class _MyHomePageState extends State<MyHomePage> {
     var gscs = jsonDecode(resp)["data"]["data"];
     gscList = [];
     for (var i = 0; i < gscs.length; i++) {
-      this.gscList.add(Gsc(gscs[i]));
+      gscList.add(Gsc(gscs[i]));
     }
     setState(() {
       currentSelect = -1;
       loading = false;
+      gscList = gscList;
     });
   }
 
@@ -274,9 +279,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   search(searchText) async {
     if (loading) {
-      setState(() {
-        searchLike = searchLike;
-      });
       return;
     }
     setState(() {
@@ -336,8 +338,17 @@ class _MyHomePageState extends State<MyHomePage> {
       gscs = jsonDecode(resp)["data"]["data"];
     }
     gscList = [];
+    List<String> __searchHistory = prefs.getStringList(searchHistoryKey);
     if (inputText.length > 0 && cacheData == null) {
       prefs.setString(key, json.encode(gscs));
+      if (__searchHistory == null) {
+        __searchHistory = [inputText];
+      } else {
+        if (__searchHistory.indexOf(inputText) == -1) {
+          __searchHistory.add(inputText);
+        }
+      }
+      prefs.setStringList(searchHistoryKey, __searchHistory);
     }
     for (var i = 0; i < gscs.length; i++) {
       gscList.add(Gsc(gscs[i]));
@@ -346,6 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
       currentSelect = -1;
       loading = false;
       gscList = gscList;
+      _searchHistory = __searchHistory;
     });
   }
 
@@ -367,6 +379,98 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       return null;
     }
+  }
+
+  getSearchHistory() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> __searchHistory = prefs.getStringList(searchHistoryKey);
+    if (__searchHistory != null)
+      setState(() {
+        _searchHistory = __searchHistory;
+      });
+  }
+
+  Widget renderHistory() {
+    if (_searchHistory != null && _searchHistory.length > 0) {
+      var result = [];
+      var total = _searchHistory.length;
+      var children = [];
+      for (var i = total - 1; i >= 0; i--) {
+        if (result.length >= 6) {
+          break;
+        }
+        var showWord = _searchHistory[i];
+        if (showWord.length > 9) {
+          showWord = showWord.substring(0, 9);
+        }
+        result.add(Row(
+          children: <Widget>[
+            IconButton(
+                onPressed: () async {
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  List<String> __searchHistory =
+                      prefs.getStringList(searchHistoryKey);
+                  __searchHistory.remove(_searchHistory[i]);
+                  prefs.setStringList(searchHistoryKey, __searchHistory);
+                  setState(() {
+                    _searchHistory = __searchHistory;
+                  });
+                },
+                icon: Icon(Icons.clear),
+                iconSize: 10,
+                padding: EdgeInsets.all(0)),
+            GestureDetector(
+                child: Text(
+                  showWord,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: true,
+                  style: TextStyle(
+                      color: Colors.grey, fontFamily: "songkai", fontSize: 14),
+                ),
+                onTap: () {
+                  editController.text = _searchHistory[i];
+                  search(_searchHistory[i]);
+                })
+          ],
+        ));
+      }
+      var temp = [];
+      for (var i = 0; i < result.length; i++) {
+        temp.add(result[i]);
+        if (i % 3 == 2) {
+          children.add(Row(children: temp.cast<Widget>()));
+          temp = [];
+        }
+      }
+      children.add(Row(children: temp.cast<Widget>()));
+      return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children.cast<Widget>());
+    } else {
+      return Container(width: 0, height: 0);
+    }
+  }
+
+  Widget renderSearchHistory() {
+    if (_searchHistory != null && _searchHistory.length > 0) {
+      return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              child: Text("搜索历史:",
+                  textAlign: TextAlign.left,
+                  style: TextStyle(fontSize: 16, fontFamily: "songti")),
+              padding: EdgeInsets.only(left: 16, top: 5, bottom: 0),
+            ),
+            Padding(
+              child: renderHistory(),
+              padding: EdgeInsets.only(left: 16, top: 5, bottom: 0),
+            )
+          ]);
+    }
+    return Container(width: 0, height: 0);
   }
 
   @override
@@ -463,22 +567,36 @@ class _MyHomePageState extends State<MyHomePage> {
                   Row(
                     children: <Widget>[
                       Padding(
-                        child: Text("只搜索喜欢:",
+                        child: Text("只搜喜欢:",
                             style:
                                 TextStyle(fontSize: 16, fontFamily: "songti")),
-                        padding: EdgeInsets.only(left: 16, top: 10, bottom: 0),
+                        padding: EdgeInsets.only(left: 16, top: 5, bottom: 0),
                       ),
                       Padding(
-                        padding: EdgeInsets.only(left: 6, top: 10, bottom: 0),
+                        padding: EdgeInsets.only(left: 6, top: 5, bottom: 0),
                         child: Switch(
                           value: searchLike,
                           activeColor: mainColor,
                           inactiveTrackColor: Colors.blueGrey,
                           onChanged: genOnChange(),
                         ),
+                      ),
+                      GestureDetector(
+                        onDoubleTap: () async {
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
+                          await prefs.clear();
+                        },
+                        child: new Container(
+                          child: Text(""),
+                          width: 200,
+                          height: 40,
+                          //color: mainColor,
+                        ),
                       )
                     ],
                   ),
+                  renderSearchHistory(),
                   Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: <Widget>[
@@ -904,7 +1022,7 @@ class _MyTabBarState extends State<MyTabBar> {
                 currentIndex = 0;
               }
             } else {
-              // 向右，切换到上一个，如果是第一个，切换到最后一个
+              // 向右，切换到上一个，如果是第一个，切换到最���一个
               if (currentIndex == 0) {
                 currentIndex = tabNum - 1;
               } else {
