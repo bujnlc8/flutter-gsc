@@ -150,7 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
         await httpClient.getUrl(Uri.parse(this.homeAip));
     request.headers.add("user-agent", "iGsc/0.0.1");
     HttpClientResponse response = await request.close();
-    String resp = await response.cast<List<int>>().transform(utf8.decoder).join();
+    String resp =
+        await response.cast<List<int>>().transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
     gscList = [];
     for (var i = 0; i < gscs.length; i++) {
@@ -535,24 +536,39 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       );
     }
     return GestureDetector(
-      child: text,
-      onDoubleTap: () {
-        // 双击回到上一首
-        if (index == 0) {
-          index = gscs.length - 1;
-        } else {
-          index -= 1;
-        }
-        setState(() {
-          index = index;
-          gsc = gscs[index];
+        child: text,
+        onDoubleTap: () {
+          // 双击回到上一首
+          if (index == 0) {
+            index = gscs.length - 1;
+          } else {
+            index -= 1;
+          }
+          setState(() {
+            index = index;
+            gsc = gscs[index];
+          });
+        },
+        onLongPressEnd: (e) {
+          // 长按截图
+          print(e);
+        },
+        onHorizontalDragEnd: (e) {
+          // 往左， 下一首
+          if (e.primaryVelocity < 0) {
+            if (index == gscs.length - 1) {
+              index = 0;
+            } else {
+              index += 1;
+            }
+          } else {
+            return null;
+          }
+          setState(() {
+            index = index;
+            gsc = gscs[index];
+          });
         });
-      },
-      onLongPressEnd: (e) {
-        // 长按截图
-        print(e);
-      },
-    );
   }
 
   Widget renderForeword() {
@@ -636,10 +652,11 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   }
 
   Future<void> _refresh() async {
-    if (index == gscs.length - 1) {
-      index = 0;
+    // 上一首
+    if (index == 0) {
+      index = gscs.length - 1;
     } else {
-      index += 1;
+      index -= 1;
     }
     setState(() {
       index = index;
