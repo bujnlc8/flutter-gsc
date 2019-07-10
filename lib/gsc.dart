@@ -28,11 +28,9 @@ class Gsc {
         // 问号
         var questionMarkIndex = this.content.indexOf("？");
         this.shortContent = this.content.substring(0, questionMarkIndex + 1);
-      } else
-        [
-          (this.shortContent =
-              this.content.substring(0, exclamatoryMarkIndex + 1))
-        ];
+      } else {
+        this.shortContent = this.content.substring(0, exclamatoryMarkIndex + 1);
+      }
     } else {
       this.shortContent = this.content.substring(0, periodIndex + 1);
     }

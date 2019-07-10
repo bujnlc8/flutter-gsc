@@ -150,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
         await httpClient.getUrl(Uri.parse(this.homeAip));
     request.headers.add("user-agent", "iGsc/0.0.1");
     HttpClientResponse response = await request.close();
-    var resp = await response.transform(utf8.decoder).join();
+    String resp = await response.cast<List<int>>().transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
     gscList = [];
     for (var i = 0; i < gscs.length; i++) {
@@ -322,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
     HttpClientRequest request = await httpClient.getUrl(uri);
     request.headers.add("user-agent", "iGsc/0.0.1");
     HttpClientResponse response = await request.close();
-    var resp = await response.transform(utf8.decoder).join();
+    var resp = await response.cast<List<int>>().transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
     gscList = [];
     for (var i = 0; i < gscs.length; i++) {
@@ -449,7 +449,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   Row(
                     children: <Widget>[
                       Padding(
-                        child: Text("只搜索喜欢:", style: TextStyle(fontSize: 16, fontFamily: "songti")),
+                        child: Text("只搜索喜欢:",
+                            style:
+                                TextStyle(fontSize: 16, fontFamily: "songti")),
                         padding: EdgeInsets.only(left: 16, top: 10, bottom: 0),
                       ),
                       Padding(
