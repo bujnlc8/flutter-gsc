@@ -35,6 +35,7 @@ class MyApp extends StatelessWidget {
       home: MyHomePage(
         //title: 'i古诗词',
         gsc: null,
+        from: "",
       ),
     );
   }
@@ -42,7 +43,8 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   final Gsc gsc;
-  MyHomePage({Key key, this.title, this.gsc}) : super(key: key);
+  final String from;
+  MyHomePage({Key key, this.title, this.gsc, this.from}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -61,11 +63,34 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Gsc _gsc;
+  bool searchLike;
+  bool loading;
 
   // 当前选中的项目
   int currentSelect;
-  List<Gsc> gscList = [];
-  var loading = false;
+  List<Gsc> gscList;
+
+  @override
+  void initState() {
+    // 初始化获取gsc
+    _gsc = widget.gsc;
+    searchLike = false;
+    loading = false;
+    gscList = [];
+    if (_gsc != null) {
+      if (widget.from == "author") {
+        editController.text = _gsc.workAuthor;
+        search(_gsc.workAuthor);
+      } else {
+        editController.text = _gsc.workTitle;
+        search(_gsc.workTitle);
+      }
+    } else {
+      getHomeGsc();
+    }
+    currentSelect = -1;
+    super.initState();
+  }
 
   style(i) {
     if (currentSelect == i) {
@@ -116,10 +141,10 @@ class _MyHomePageState extends State<MyHomePage> {
   var _contentFocusNode = FocusNode();
 
   void getHomeGsc() async {
-    this.gscList = [];
-    this.loading = true;
+    gscList = [];
     setState(() {
       currentSelect = -1;
+      loading = true;
     });
     HttpClientRequest request =
         await httpClient.getUrl(Uri.parse(this.homeAip));
@@ -127,13 +152,13 @@ class _MyHomePageState extends State<MyHomePage> {
     HttpClientResponse response = await request.close();
     var resp = await response.transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
-    this.gscList = [];
+    gscList = [];
     for (var i = 0; i < gscs.length; i++) {
       this.gscList.add(Gsc(gscs[i]));
     }
-    this.loading = false;
     setState(() {
       currentSelect = -1;
+      loading = false;
     });
   }
 
@@ -146,7 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context,
       new MaterialPageRoute(
           builder: (context) =>
-              new GscDetailScreen(gscs: this.gscList, index: index)),
+              new GscDetailScreen(gscs: gscList, index: index)),
     );
   }
 
@@ -155,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget renderListView() {
-    if (this.loading) {
+    if (loading) {
       return getProgressDialog();
     }
     return RefreshIndicator(
@@ -245,34 +270,48 @@ class _MyHomePageState extends State<MyHomePage> {
             }));
   }
 
-  @override
-  void initState() {
-    // 初始化获取gsc
-    this._gsc = this.widget.gsc;
-    if (this._gsc != null) {
-      editController.text = this._gsc.workAuthor;
-      search(this._gsc.workAuthor);
-    } else {
-      getHomeGsc();
-    }
-    currentSelect = -1;
-    super.initState();
-  }
-
   search(searchText) async {
-    this.gscList = [];
-    if (this.loading) {
+    if (loading) {
+      setState(() {
+        searchLike = searchLike;
+      });
       return;
     }
-    this.loading = true;
     setState(() {
       currentSelect = -1;
+      loading = true;
+      gscList = [];
     });
-    var inputText;
+    String inputText;
     if (searchText == null) {
-      inputText = this.editController.text.trim();
+      inputText = editController.text.trim();
     } else {
       inputText = searchText;
+    }
+    // 只搜索喜欢
+    if (searchLike) {
+      var maps = [];
+      if (inputText.length > 0) {
+        maps = await dB.query(
+            "gsc_like",
+            ["*"],
+            " `like` = 1 and (work_title like '%?%' or work_author like '%?%' or content like '%?%') group by id order by audio_id desc"
+                .replaceAll("?", inputText),
+            []);
+      } else {
+        maps = await dB.query("gsc_like", ["*"],
+            "`like` = 1 group by id order by audio_id desc", []);
+      }
+      gscList = [];
+      for (var i = 0; i < maps.length; i++) {
+        gscList.add(new Gsc.fromDictionary(maps[i]));
+      }
+      setState(() {
+        currentSelect = -1;
+        loading = false;
+        gscList = gscList;
+      });
+      return;
     }
     Uri uri;
     if (inputText.length == 0) {
@@ -285,13 +324,14 @@ class _MyHomePageState extends State<MyHomePage> {
     HttpClientResponse response = await request.close();
     var resp = await response.transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
-    this.gscList = [];
+    gscList = [];
     for (var i = 0; i < gscs.length; i++) {
-      this.gscList.add(Gsc(gscs[i]));
+      gscList.add(Gsc(gscs[i]));
     }
-    this.loading = false;
     setState(() {
       currentSelect = -1;
+      loading = false;
+      gscList = gscList;
     });
   }
 
@@ -300,6 +340,19 @@ class _MyHomePageState extends State<MyHomePage> {
         child: new CupertinoActivityIndicator(
       radius: 25,
     ));
+  }
+
+  Function genOnChange() {
+    if (!loading) {
+      return (e) {
+        setState(() {
+          searchLike = e;
+        });
+        search(null);
+      };
+    } else {
+      return null;
+    }
   }
 
   @override
@@ -393,14 +446,31 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   Row(
+                    children: <Widget>[
+                      Padding(
+                        child: Text("只搜索喜欢:", style: TextStyle(fontSize: 16, fontFamily: "songti")),
+                        padding: EdgeInsets.only(left: 16, top: 10, bottom: 0),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 6, top: 10, bottom: 0),
+                        child: Switch(
+                          value: searchLike,
+                          activeColor: mainColor,
+                          inactiveTrackColor: Colors.blueGrey,
+                          onChanged: genOnChange(),
+                        ),
+                      )
+                    ],
+                  ),
+                  Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: <Widget>[
                         Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16, top: 10, bottom: 0),
+                          padding:
+                              EdgeInsets.only(left: 16, top: 10, bottom: 0),
                           child: Text(
-                            "搜索结果({num})".replaceAll(
-                                "{num}", this.gscList.length.toString()),
+                            "搜索结果({num})"
+                                .replaceAll("{num}", gscList.length.toString()),
                             style: TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 16),
                           ),
@@ -432,9 +502,8 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   @override
   void initState() {
-    this.gscs = this.widget.gscs;
-    this.index = this.widget.index;
-    index = index;
+    gscs = widget.gscs;
+    index = widget.index;
     gsc = gscs[index];
     super.initState();
   }
@@ -598,13 +667,25 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Text(
-                          gsc.workTitle,
-                          style: style,
-                          textAlign: TextAlign.center,
-                          maxLines: 3,
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
+                        new GestureDetector(
+                          child: Text(
+                            gsc.workTitle,
+                            style: style,
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            softWrap: true,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              new MaterialPageRoute(
+                                  builder: (context) => new MyHomePage(
+                                        gsc: gsc,
+                                        from: "title",
+                                      )),
+                            );
+                          },
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -625,8 +706,10 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                             Navigator.push(
                               context,
                               new MaterialPageRoute(
-                                  builder: (context) =>
-                                      new MyHomePage(title: "i古诗词", gsc: gsc)),
+                                  builder: (context) => new MyHomePage(
+                                        gsc: gsc,
+                                        from: "author",
+                                      )),
                             )
                           },
                     ),
@@ -664,17 +747,17 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
   void initState() {
     super.initState();
     isPlaying = false;
-    playUrl = this.widget.playUrl;
+    playUrl = widget.playUrl;
   }
 
   @override
   void didUpdateWidget(PlayAudioWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (playUrl != this.widget.playUrl) {
+    if (playUrl != widget.playUrl) {
       audioPlayer.pause();
       setState(() {
         isPlaying = false;
-        playUrl = this.widget.playUrl;
+        playUrl = widget.playUrl;
       });
     }
   }
@@ -683,13 +766,13 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
     audioPlayer.onPlayerStateChanged.listen((onData) {
       if (onData == AudioPlayerState.STOPPED) {
         setState(() {
-          playUrl = this.widget.playUrl;
+          playUrl = widget.playUrl;
           isPlaying = false;
         });
       }
     }, onError: (msg) {
       setState(() {
-        playUrl = this.widget.playUrl;
+        playUrl = widget.playUrl;
         isPlaying = false;
       });
       debugPrint(msg);
@@ -698,13 +781,13 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
 
   void togglePlaying() async {
     if (!isPlaying) {
-      await audioPlayer.play(this.widget.playUrl);
+      await audioPlayer.play(widget.playUrl);
     } else {
       await audioPlayer.pause();
     }
     setState(() {
       isPlaying = !isPlaying;
-      playUrl = this.widget.playUrl;
+      playUrl = widget.playUrl;
     });
   }
 
@@ -768,9 +851,9 @@ class _MyTabBarState extends State<MyTabBar> {
   @override
   void initState() {
     super.initState();
-    this.children = this.widget.children;
-    selectContent = this.children[0].tabContent;
-    selectItem = this.children[0].tabName;
+    children = widget.children;
+    selectContent = children[0].tabContent;
+    selectItem = children[0].tabName;
     currentIndex = 0;
   }
 
@@ -779,7 +862,7 @@ class _MyTabBarState extends State<MyTabBar> {
       padding: EdgeInsets.only(left: 15, right: 15, top: 0, bottom: 5),
       child: GestureDetector(
           onHorizontalDragEnd: (e) {
-            var tabNum = this.children.length;
+            var tabNum = children.length;
             if (e.primaryVelocity < 0) {
               // 向左, 切换到下一个tab, 如果是最后一个， 切换到第一个
               if (currentIndex < tabNum - 1) {
@@ -796,12 +879,12 @@ class _MyTabBarState extends State<MyTabBar> {
               }
             }
             setState(() {
-              selectContent = this.children[currentIndex].tabContent;
-              selectItem = this.children[currentIndex].tabName;
+              selectContent = children[currentIndex].tabContent;
+              selectItem = children[currentIndex].tabName;
               currentIndex = currentIndex;
             });
           },
-          child: Text(this.selectContent,
+          child: Text(selectContent,
               style: TextStyle(
                 fontSize: 17,
                 height: 1.4,
@@ -827,13 +910,13 @@ class _MyTabBarState extends State<MyTabBar> {
   @override
   Widget build(BuildContext context) {
     var result = <Widget>[];
-    for (var i = 0; i < this.children.length; i++) {
+    for (var i = 0; i < children.length; i++) {
       result.add(Expanded(
           child: Column(children: <Widget>[
         FlatButton(
             highlightColor: mainColor,
             child: Text(
-              this.children[i].tabName,
+              children[i].tabName,
               maxLines: 1,
               style: TextStyle(
                   fontFamily: "songkai",
@@ -842,8 +925,8 @@ class _MyTabBarState extends State<MyTabBar> {
             ),
             onPressed: () {
               setState(() {
-                selectContent = this.children[i].tabContent;
-                selectItem = this.children[i].tabName;
+                selectContent = children[i].tabContent;
+                selectItem = children[i].tabName;
                 currentIndex = i;
               });
             }),

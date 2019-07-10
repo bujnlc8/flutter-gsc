@@ -134,21 +134,42 @@ class Gsc {
     map["foreword"] = this.foreword;
     map["intro"] = this.intro;
     map["layout"] = this.layout;
+    map["short_content"] = this.shortContent;
+    map["play_url"] = this.playUrl;
     return map;
+  }
+
+  Gsc.fromDictionary(gsc) {
+    this.id = gsc["id"];
+    this.content = gsc["content"];
+    this.workAuthor = gsc["work_author"];
+    this.workTitle = gsc["work_title"];
+    this.workDynasty = gsc["work_dynasty"];
+    this.layout = gsc["layout"];
+    this.translation = gsc["translation"];
+    this.intro = gsc["intro"];
+    this.foreword = gsc["foreword"];
+    this.appreciation = gsc["appreciation"];
+    this.masterComment = gsc["master_comment"];
+    this.audioId = gsc["audio_id"];
+    this.annotation = gsc["annotation"];
+    this.shortContent = gsc["short_content"];
+    this.playUrl = gsc["play_url"];
+    this.like = gsc["like"];
   }
 }
 
 class MyDb {
   Database db;
   initDb() async {
-    db = await openDatabase("gsc_like.db", version: 1,
+    db = await openDatabase("gsc_like2019.db", version: 3,
         onCreate: (Database db, int version) async {
       await db.transaction((tx) async {
         await tx.execute("""
             CREATE TABLE `gsc_like`( 
             `id` integer NOT NULL,
             `work_title` varchar(512) NOT NULL DEFAULT '',
-            `work_author` varchar(512) not NULL DEFAULT '',
+            `work_author` varchar(512) NOT NULL DEFAULT '',
             `work_dynasty` varchar(32) NOT NULL DEFAULT '',
             `content` text NOT NULL default '',
             `translation` text NOT NULL default '',
@@ -160,7 +181,10 @@ class MyDb {
             `appreciation` text ,
             `master_comment` text ,
             `layout` varchar(10) DEFAULT 'indent', 
-            `like` tinyint not null default 0);
+            `like` tinyint NOT NULL default 0,
+            `short_content` varchar(256) NOT NULL DEFAULT '',
+            `play_url` varchar(256) NOT NULL DEFAULT '',
+            `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP);
             """);
       });
     });
