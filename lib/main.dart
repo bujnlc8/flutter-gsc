@@ -8,6 +8,7 @@ import 'package:audioplayer/audioplayer.dart';
 import 'gsc.dart';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
@@ -148,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     HttpClientRequest request =
         await httpClient.getUrl(Uri.parse(this.homeAip));
-    request.headers.add("user-agent", "iGsc/0.0.1");
+    request.headers.add("user-agent", "iGsc/1.0.0");
     HttpClientResponse response = await request.close();
     String resp =
         await response.cast<List<int>>().transform(utf8.decoder).join();
@@ -315,17 +316,29 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
     Uri uri;
+    var key = "search_" + inputText;
+    var gscs = [];
+    var cacheData;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     if (inputText.length == 0) {
       uri = Uri.parse(homeAip);
     } else {
+      cacheData = prefs.get(key);
+      if (cacheData != null) gscs = json.decode(cacheData);
       uri = Uri.parse(searchAip.replaceAll("{inputText}", inputText));
     }
-    HttpClientRequest request = await httpClient.getUrl(uri);
-    request.headers.add("user-agent", "iGsc/0.0.1");
-    HttpClientResponse response = await request.close();
-    var resp = await response.cast<List<int>>().transform(utf8.decoder).join();
-    var gscs = jsonDecode(resp)["data"]["data"];
+    if (cacheData == null) {
+      HttpClientRequest request = await httpClient.getUrl(uri);
+      request.headers.add("User-Agent", "iGsc/1.0.0");
+      HttpClientResponse response = await request.close();
+      var resp =
+          await response.cast<List<int>>().transform(utf8.decoder).join();
+      gscs = jsonDecode(resp)["data"]["data"];
+    }
     gscList = [];
+    if (inputText.length > 0 && cacheData == null) {
+      prefs.setString(key, json.encode(gscs));
+    }
     for (var i = 0; i < gscs.length; i++) {
       gscList.add(Gsc(gscs[i]));
     }
