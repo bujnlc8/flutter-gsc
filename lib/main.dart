@@ -270,7 +270,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Padding(
                         padding: EdgeInsets.only(left: 14, right: 14),
                         child:
-                            Divider(height: 5.0, indent: 0, color: Colors.grey),
+                            Divider(height: 16.0, indent: 0, color: Colors.grey),
                       )
                     ],
                   ));
@@ -394,60 +394,44 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_searchHistory != null && _searchHistory.length > 0) {
       var result = [];
       var total = _searchHistory.length;
-      var children = [];
       for (var i = total - 1; i >= 0; i--) {
-        if (result.length >= 6) {
+        if (result.length >= 8) {
           break;
         }
-        var showWord = _searchHistory[i];
-        if (showWord.length > 9) {
-          showWord = showWord.substring(0, 9);
-        }
-        result.add(Row(
+        result.add(Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: <Widget>[
-            IconButton(
-                onPressed: () async {
-                  SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
-                  List<String> __searchHistory =
-                      prefs.getStringList(searchHistoryKey);
-                  __searchHistory.remove(_searchHistory[i]);
-                  prefs.setStringList(searchHistoryKey, __searchHistory);
-                  setState(() {
-                    _searchHistory = __searchHistory;
-                  });
-                },
-                icon: Icon(Icons.clear),
-                iconSize: 10,
-                padding: EdgeInsets.all(0)),
             GestureDetector(
                 child: Text(
-                  showWord,
+                  _searchHistory[i],
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  softWrap: true,
                   style: TextStyle(
                       color: Colors.grey, fontFamily: "songkai", fontSize: 14),
                 ),
                 onTap: () {
                   editController.text = _searchHistory[i];
                   search(_searchHistory[i]);
-                })
+                }),
+            IconButton(
+              alignment: Alignment.topCenter,
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                List<String> __searchHistory =
+                    prefs.getStringList(searchHistoryKey);
+                __searchHistory.remove(_searchHistory[i]);
+                prefs.setStringList(searchHistoryKey, __searchHistory);
+                setState(() {
+                  _searchHistory = __searchHistory;
+                });
+              },
+              icon: Icon(Icons.clear),
+              iconSize: 12,
+            ),
           ],
         ));
       }
-      var temp = [];
-      for (var i = 0; i < result.length; i++) {
-        temp.add(result[i]);
-        if (i % 3 == 2) {
-          children.add(Row(children: temp.cast<Widget>()));
-          temp = [];
-        }
-      }
-      children.add(Row(children: temp.cast<Widget>()));
-      return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children.cast<Widget>());
+      return Wrap(children: result.cast<Widget>());
     } else {
       return Container(width: 0, height: 0);
     }
@@ -462,11 +446,11 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Text("搜索历史:",
                   textAlign: TextAlign.left,
                   style: TextStyle(fontSize: 16, fontFamily: "songti")),
-              padding: EdgeInsets.only(left: 16, top: 5, bottom: 0),
+              padding: EdgeInsets.only(left: 16, top: 2, bottom: 0),
             ),
             Padding(
               child: renderHistory(),
-              padding: EdgeInsets.only(left: 16, top: 5, bottom: 0),
+              padding: EdgeInsets.only(left: 16, top: 2, bottom: 0),
             )
           ]);
     }
@@ -578,6 +562,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           value: searchLike,
                           activeColor: mainColor,
                           inactiveTrackColor: Colors.blueGrey,
+                          inactiveThumbColor: backgroundColor,
                           onChanged: genOnChange(),
                         ),
                       ),
@@ -589,7 +574,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                         child: new Container(
                           child: Text(""),
-                          width: 200,
+                          width: 150,
                           height: 40,
                           //color: mainColor,
                         ),
