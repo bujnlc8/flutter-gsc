@@ -339,8 +339,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     gscList = [];
     List<String> __searchHistory = prefs.getStringList(searchHistoryKey);
-    if (inputText.length > 0 && cacheData == null) {
-      prefs.setString(key, json.encode(gscs));
+    if (inputText.length > 0) {
       if (__searchHistory == null) {
         __searchHistory = [inputText];
       } else {
@@ -349,6 +348,9 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
       prefs.setStringList(searchHistoryKey, __searchHistory);
+      if(cacheData == null){
+        prefs.setString(key, json.encode(gscs));
+      }
     }
     for (var i = 0; i < gscs.length; i++) {
       gscList.add(Gsc(gscs[i]));
