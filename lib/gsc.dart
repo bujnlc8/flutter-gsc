@@ -83,6 +83,8 @@ class Gsc {
     if (this.audioId > 0) {
       this.playUrl = "https://songci.nos-eastchina1.126.net/audio/{}.m4a"
           .replaceAll("{}", this.audioId.toString());
+    }else{
+      this.playUrl = "";
     }
     this.isLiked();
     this.workTitle = this.workTitle.replaceAll("/", "∙");
