@@ -459,7 +459,13 @@ class _MyHomePageState extends State<MyHomePage> {
                GestureDetector(
                     child: 
                     Padding(
-                      child:  Icon(Icons.clear_all, size: 18,),
+                      child: (){
+                          if(showHistorySearch){
+                            return Icon(Icons.clear_all, size: 18,);
+                          }else{
+                            return Icon(Icons.dehaze, size: 14,);
+                          }
+                      }(),
                       padding: EdgeInsets.only(left: 12),
                     ),
                     onTap: (){
