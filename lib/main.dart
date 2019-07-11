@@ -73,12 +73,14 @@ class _MyHomePageState extends State<MyHomePage> {
   int currentSelect;
   List<Gsc> gscList;
   List<String> _searchHistory;
+  bool showHistorySearch;
 
   @override
   void initState() {
     _gsc = widget.gsc;
     searchLike = false;
     loading = false;
+    showHistorySearch = true;
     gscList = [];
     _searchHistory = [];
     if (_gsc != null) {
@@ -269,8 +271,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       ]),
                       Padding(
                         padding: EdgeInsets.only(left: 14, right: 14),
-                        child:
-                            Divider(height: 16.0, indent: 0, color: Colors.grey),
+                        child: Divider(
+                            height: 16.0, indent: 0, color: Colors.grey),
                       )
                     ],
                   ));
@@ -348,7 +350,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
       prefs.setStringList(searchHistoryKey, __searchHistory);
-      if(cacheData == null){
+      if (cacheData == null) {
         prefs.setString(key, json.encode(gscs));
       }
     }
@@ -393,7 +395,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget renderHistory() {
-    if (_searchHistory != null && _searchHistory.length > 0) {
+    if (_searchHistory != null && _searchHistory.length > 0 && showHistorySearch) {
       var result = [];
       var total = _searchHistory.length;
       for (var i = total - 1; i >= 0; i--) {
@@ -444,11 +446,29 @@ class _MyHomePageState extends State<MyHomePage> {
       return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Padding(
-              child: Text("搜索历史:",
-                  textAlign: TextAlign.left,
-                  style: TextStyle(fontSize: 16, fontFamily: "songti")),
-              padding: EdgeInsets.only(left: 16, top: 2, bottom: 0),
+            Wrap(
+              spacing: 5,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Padding(
+                  child: Text("搜索历史:",
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 16, fontFamily: "songti")),
+                  padding: EdgeInsets.only(left: 16),
+                ),
+               GestureDetector(
+                    child: 
+                    Padding(
+                      child:  Icon(Icons.clear_all, size: 18,),
+                      padding: EdgeInsets.only(left: 12),
+                    ),
+                    onTap: (){
+                      setState(() {
+                        showHistorySearch = !showHistorySearch;
+                      });
+                    },
+                )
+              ],
             ),
             Padding(
               child: renderHistory(),
