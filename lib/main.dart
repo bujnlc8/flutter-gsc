@@ -395,7 +395,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget renderHistory() {
-    if (_searchHistory != null && _searchHistory.length > 0 && showHistorySearch) {
+    if (_searchHistory != null &&
+        _searchHistory.length > 0 &&
+        showHistorySearch) {
       var result = [];
       var total = _searchHistory.length;
       for (var i = total - 1; i >= 0; i--) {
@@ -456,23 +458,28 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: TextStyle(fontSize: 16, fontFamily: "songti")),
                   padding: EdgeInsets.only(left: 16),
                 ),
-               GestureDetector(
-                    child: 
-                    Padding(
-                      child: (){
-                          if(showHistorySearch){
-                            return Icon(Icons.clear_all, size: 18,);
-                          }else{
-                            return Icon(Icons.dehaze, size: 14,);
-                          }
-                      }(),
-                      padding: EdgeInsets.only(left: 12),
-                    ),
-                    onTap: (){
-                      setState(() {
-                        showHistorySearch = !showHistorySearch;
-                      });
-                    },
+                GestureDetector(
+                  child: Padding(
+                    child: () {
+                      if (showHistorySearch) {
+                        return Icon(
+                          Icons.clear_all,
+                          size: 18,
+                        );
+                      } else {
+                        return Icon(
+                          Icons.dehaze,
+                          size: 14,
+                        );
+                      }
+                    }(),
+                    padding: EdgeInsets.only(left: 12),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      showHistorySearch = !showHistorySearch;
+                    });
+                  },
                 )
               ],
             ),
@@ -757,7 +764,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     }
     return GestureDetector(
       child: Icon(
-        Icons.favorite,
+        Icons.favorite_border,
         color: Colors.grey,
         size: 18,
       ),
@@ -854,8 +861,14 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            renderPlayIcon(),
-                            renderLikeIcon()
+                            Padding(
+                              child: renderPlayIcon(),
+                              padding: EdgeInsets.only(right: 8, top: 5),
+                            ),
+                            Padding(
+                              child: renderLikeIcon(),
+                              padding: EdgeInsets.only(top: 5),
+                            ),
                           ],
                         )
                       ],
@@ -958,15 +971,11 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
   @override
   Widget build(BuildContext context) {
     if (isPlaying) {
-      return IconButton(
-          icon: Icon(Icons.pause),
-          padding: EdgeInsets.only(left: 8, top: 14, right: 8, bottom: 8),
-          onPressed: () => {this.togglePlaying()});
+      return GestureDetector(
+          child: Icon(Icons.pause), onTap: () => {this.togglePlaying()});
     } else {
-      return IconButton(
-          icon: Icon(Icons.play_arrow),
-          padding: EdgeInsets.only(left: 8, top: 14, right: 8, bottom: 8),
-          onPressed: () => {this.togglePlaying()});
+      return GestureDetector(
+          child: Icon(Icons.play_arrow), onTap: () => {this.togglePlaying()});
     }
   }
 }
