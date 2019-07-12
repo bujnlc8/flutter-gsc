@@ -563,7 +563,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       if (editController.text.trim() != "") {
                                         getHomeGsc();
                                       }
-                                      //editController.text = "";
+                                      // editController.text = "";
                                       editController.clear();
                                       _contentFocusNode.unfocus();
                                     }),
@@ -775,7 +775,8 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   renderTabBar() {
     var result = <MyTabItem>[];
     if (gsc.authorIntro != null) {
-      result.add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
+      result
+          .add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
     }
     if (gsc.intro.length > 0) {
       result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
@@ -902,13 +903,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                               ),
                               padding: EdgeInsets.only(left: 10),
                             ),
-                            onTap: () {
+                            onTap: () async {
                               Navigator.push(
                                   context,
                                   new MaterialPageRoute(
                                       builder: (context) => new WebviewWidget(
                                             url: gsc.authorIntro["baidu_wiki"],
-                                            title: gsc.workAuthor,
+                                            title: gsc.workAuthor + "简介",
                                           )));
                             },
                           );
@@ -1043,7 +1044,6 @@ class MyTabBar extends StatefulWidget {
 }
 
 class _MyTabBarState extends State<MyTabBar> {
-  
   List<MyTabItem> children;
 
   String selectContent;
@@ -1164,14 +1164,11 @@ class _MyTabBarState extends State<MyTabBar> {
   }
 }
 
-///webview 封装
 class WebviewWidget extends StatelessWidget {
   final String url;
   final String title;
 
-  WebviewWidget({Key key, this.url, this.title})
-      : assert(url != null && url.length > 0),
-        super(key: key);
+  const WebviewWidget({Key key, this.url, this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1181,17 +1178,22 @@ class WebviewWidget extends StatelessWidget {
       withJavascript: true,
       withLocalStorage: true,
       withZoom: true,
+      hidden: true,
       appBar: PreferredSize(
           child: new AppBar(
-            title: Text(
-              title,
-              style: TextStyle(color: mainColor, fontFamily: "songti"),
-            ),
-            backgroundColor: backgroundColor,
-            brightness: Brightness.light,
-            iconTheme: IconThemeData(color: mainColor),
-          ),
-          preferredSize: Size.fromHeight(45)),
+              elevation: 0,
+              centerTitle: true,
+              title: Text(
+                title,
+                style: TextStyle(color: mainColor, fontFamily: "songti"),
+              ),
+              backgroundColor: backgroundColor,
+              brightness: Brightness.light,
+              iconTheme: IconThemeData(color: mainColor)),
+          preferredSize: Size.fromHeight(40)),
+      initialChild: Container(
+          color: backgroundColor,
+          child: Center(child: new CupertinoActivityIndicator(radius: 25))),
     );
   }
 }
