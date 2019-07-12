@@ -44,6 +44,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/line.png
+    - data/authors.json
   fonts:
     - family: songkai
       fonts:

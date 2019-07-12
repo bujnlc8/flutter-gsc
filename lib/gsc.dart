@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Gsc {
@@ -16,6 +19,7 @@ class Gsc {
   String playUrl;
   String masterComment;
   String annotation;
+  Map authorIntro;
   int like = 0;
 
   void setShortContent() {
@@ -54,40 +58,79 @@ class Gsc {
     setShortContent();
 
     if (this.layout == 'indent') {
-      this.content =
-          "　　" + this.content.replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+      this.content = "　　" +
+          this
+              .content
+              .replaceAll(" ", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
     }
     if (this.translation.length > 0) {
-      this.translation =
-          "　　" + this.translation.replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+      this.translation = "　　" +
+          this
+              .translation
+              .replaceAll("　", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
     }
     if (this.foreword.length > 0) {
-      this.foreword = "　　 " + this.foreword;
+      this.foreword = "　　 " + this.foreword.replaceAll(" ", "");
     }
     if (this.masterComment.length > 0) {
       this.masterComment = "　　" +
-          this.masterComment.replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+          this
+              .masterComment
+              .replaceAll("　", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
     }
     if (this.intro.length > 0) {
-      this.intro =
-          "　　" + this.intro.replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+      this.intro = "　　" +
+          this
+              .intro
+              .replaceAll("　", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
     }
     if (this.annotation.length > 0) {
-      this.annotation =
-          "　　" + this.annotation.replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+      this.annotation = "　　" +
+          this
+              .annotation
+              .replaceAll("　", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
     }
     if (this.appreciation.length > 0) {
       this.appreciation = "　　" +
-          this.appreciation.replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+          this
+              .appreciation
+              .replaceAll("　", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
     }
     if (this.audioId > 0) {
       this.playUrl = "https://songci.nos-eastchina1.126.net/audio/{}.m4a"
           .replaceAll("{}", this.audioId.toString());
-    }else{
+    } else {
       this.playUrl = "";
     }
     this.isLiked();
-    this.workTitle = this.workTitle.replaceAll("/", "∙");
+    this.workTitle = this.workTitle.replaceAll("　", "").replaceAll("/", "∙");
+    this.queryAuthor();
+  }
+
+  queryAuthor() async {
+    if (authorM.authors == null) {
+      await authorM.initAuthor();
+    }
+    Map authorIntro = authorM.authors[this.workAuthor];
+    if (authorIntro != null) {
+      this.authorIntro = new Map.from(authorIntro);
+      this.authorIntro["intro"] = "　　" +
+          "公元（" +
+          this.authorIntro["birth_year"] +
+          "-" +
+          this.authorIntro["death_year"] +
+          "）。" +
+          this
+              .authorIntro["intro"]
+              .replaceAll("　", "")
+              .replaceAll(new RegExp(r"\n|\t"), "\n" + "　　");
+    }
   }
 
   isLiked() async {
@@ -137,6 +180,7 @@ class Gsc {
     map["layout"] = this.layout;
     map["short_content"] = this.shortContent;
     map["play_url"] = this.playUrl;
+    map["author_intro"] = json.encode(this.authorIntro);
     return map;
   }
 
@@ -157,13 +201,14 @@ class Gsc {
     this.shortContent = gsc["short_content"];
     this.playUrl = gsc["play_url"];
     this.like = gsc["like"];
+    this.authorIntro = json.decode(gsc["author_intro"]);
   }
 }
 
 class MyDb {
   Database db;
   initDb() async {
-    db = await openDatabase("gsc_like2019.db", version: 3,
+    db = await openDatabase("gsclike.db", version: 3,
         onCreate: (Database db, int version) async {
       await db.transaction((tx) async {
         await tx.execute("""
@@ -175,6 +220,7 @@ class MyDb {
             `content` text NOT NULL default '',
             `translation` text NOT NULL default '',
             `intro` text,
+            `author_intro` text,
             `baidu_wiki` varchar(256) default '',
             `audio_id` integer not null default 0,
             `foreword` text,
@@ -216,3 +262,18 @@ class MyDb {
 }
 
 MyDb dB = new MyDb();
+
+class Author {
+  Map authors;
+
+  initAuthor() async {
+    String authorString = await rootBundle.loadString("data/authors.json");
+    authors = json.decode(authorString);
+  }
+
+  Author() {
+    initAuthor();
+  }
+}
+
+Author authorM = Author();

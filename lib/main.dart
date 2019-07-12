@@ -105,7 +105,8 @@ class _MyHomePageState extends State<MyHomePage> {
           height: 1.5,
           fontSize: 18,
           fontFamily: "songkai",
-          fontStyle: FontStyle.italic);
+          color: mainColor
+          );
     }
     return TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
   }
@@ -116,8 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
           height: 1.5,
           fontSize: 18,
           fontFamily: "songkai",
-          fontWeight: FontWeight.w600,
-          fontStyle: FontStyle.italic);
+          fontWeight: FontWeight.w600, color: mainColor);
     }
     return TextStyle(
         height: 1.5,
@@ -131,8 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
       return TextStyle(
           height: 1.5,
           fontSize: 17,
-          fontFamily: "songkai",
-          fontStyle: FontStyle.italic);
+          fontFamily: "songkai", color: mainColor);
     } else {
       return TextStyle(height: 1.5, fontSize: 15, fontFamily: "songti");
     }
@@ -778,6 +777,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   renderTabBar() {
     var result = <MyTabItem>[];
+    if(gsc.authorIntro !=null){
+      result.add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
+    }
     if (gsc.intro.length > 0) {
       result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
     }
