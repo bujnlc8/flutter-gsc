@@ -774,8 +774,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   renderTabBar() {
     var result = <MyTabItem>[];
     if (gsc.authorIntro != null) {
-      result
-          .add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
+      result.add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
     }
     if (gsc.intro.length > 0) {
       result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
@@ -1033,7 +1032,7 @@ class MyTabBar extends StatefulWidget {
   final List<MyTabItem> children;
 
   @override
-  State<StatefulWidget> createState() {
+  _MyTabBarState createState() {
     return new _MyTabBarState();
   }
 
@@ -1043,6 +1042,7 @@ class MyTabBar extends StatefulWidget {
 }
 
 class _MyTabBarState extends State<MyTabBar> {
+  
   List<MyTabItem> children;
 
   String selectContent;
@@ -1053,11 +1053,22 @@ class _MyTabBarState extends State<MyTabBar> {
 
   @override
   void initState() {
-    super.initState();
     children = widget.children;
     selectContent = children[0].tabContent;
     selectItem = children[0].tabName;
     currentIndex = 0;
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(MyTabBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    setState(() {
+      children = widget.children;
+      selectContent = children[0].tabContent;
+      selectItem = children[0].tabName;
+      currentIndex = 0;
+    });
   }
 
   Widget getContent() {
@@ -1074,7 +1085,7 @@ class _MyTabBarState extends State<MyTabBar> {
                 currentIndex = 0;
               }
             } else {
-              // 向右，切换到上一个，如果是第一个，切换到最���一个
+              // 向右，切换到上一个，如果是第一个，切换到最后一个
               if (currentIndex == 0) {
                 currentIndex = tabNum - 1;
               } else {
