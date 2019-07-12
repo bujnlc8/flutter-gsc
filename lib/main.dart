@@ -197,6 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
             itemBuilder: (context, index) {
               var gsc = gscList[index];
               return new GestureDetector(
+                  behavior: HitTestBehavior.translucent,
                   onTap: () {
                     goToDetail(index);
                   },
@@ -1176,6 +1177,7 @@ class WebviewWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return WebviewScaffold(
       url: url,
+      scrollBar: false,
       withJavascript: true,
       withLocalStorage: true,
       withZoom: true,
