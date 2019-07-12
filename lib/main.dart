@@ -9,6 +9,7 @@ import 'gsc.dart';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
@@ -102,11 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
   style(i) {
     if (currentSelect == i) {
       return TextStyle(
-          height: 1.5,
-          fontSize: 18,
-          fontFamily: "songkai",
-          color: mainColor
-          );
+          height: 1.5, fontSize: 18, fontFamily: "songkai", color: mainColor);
     }
     return TextStyle(height: 1.5, fontSize: 16, fontFamily: "songti");
   }
@@ -117,7 +114,8 @@ class _MyHomePageState extends State<MyHomePage> {
           height: 1.5,
           fontSize: 18,
           fontFamily: "songkai",
-          fontWeight: FontWeight.w600, color: mainColor);
+          fontWeight: FontWeight.w600,
+          color: mainColor);
     }
     return TextStyle(
         height: 1.5,
@@ -129,9 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
   shortContentStyle(i) {
     if (i == currentSelect) {
       return TextStyle(
-          height: 1.5,
-          fontSize: 17,
-          fontFamily: "songkai", color: mainColor);
+          height: 1.5, fontSize: 17, fontFamily: "songkai", color: mainColor);
     } else {
       return TextStyle(height: 1.5, fontSize: 15, fontFamily: "songti");
     }
@@ -777,8 +773,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   renderTabBar() {
     var result = <MyTabItem>[];
-    if(gsc.authorIntro !=null){
-      result.add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
+    if (gsc.authorIntro != null) {
+      result
+          .add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
     }
     if (gsc.intro.length > 0) {
       result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
@@ -875,23 +872,54 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                         )
                       ],
                     ),
-                    new GestureDetector(
-                      child: Text(
-                        "【" + gsc.workDynasty + "】" + gsc.workAuthor,
-                        style: style,
-                        textAlign: TextAlign.center,
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: <
+                        Widget>[
+                      new GestureDetector(
+                        child: Text(
+                          "【" + gsc.workDynasty + "】" + gsc.workAuthor,
+                          style: style,
+                          textAlign: TextAlign.center,
+                        ),
+                        onTap: () => {
+                              Navigator.push(
+                                context,
+                                new MaterialPageRoute(
+                                    builder: (context) => new MyHomePage(
+                                          gsc: gsc,
+                                          from: "author",
+                                        )),
+                              )
+                            },
                       ),
-                      onTap: () => {
-                            Navigator.push(
-                              context,
-                              new MaterialPageRoute(
-                                  builder: (context) => new MyHomePage(
-                                        gsc: gsc,
-                                        from: "author",
-                                      )),
-                            )
-                          },
-                    ),
+                      () {
+                        if (gsc.authorIntro != null &&
+                            gsc.authorIntro["baidu_wiki"] != "") {
+                          return GestureDetector(
+                            child: Padding(
+                              child: Icon(
+                                Icons.link,
+                                size: 18,
+                              ),
+                              padding: EdgeInsets.only(left: 10),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  new MaterialPageRoute(
+                                      builder: (context) => new WebviewWidget(
+                                            url: gsc.authorIntro["baidu_wiki"],
+                                            title: gsc.workAuthor,
+                                          )));
+                            },
+                          );
+                        } else {
+                          return Container(
+                            width: 0,
+                            height: 0,
+                          );
+                        }
+                      }()
+                    ]),
                     renderForeword(), // foreword
                     renderContent(), // 正文
                     renderTabBar(),
@@ -1120,6 +1148,37 @@ class _MyTabBarState extends State<MyTabBar> {
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: result),
         getContent()
       ],
+    );
+  }
+}
+
+///webview 封装
+class WebviewWidget extends StatelessWidget {
+  final String url;
+  final String title;
+
+  WebviewWidget({Key key, this.url, this.title})
+      : assert(url != null && url.length > 0),
+        super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return WebviewScaffold(
+      url: url,
+      withJavascript: true,
+      withLocalStorage: true,
+      withZoom: true,
+      appBar: PreferredSize(
+          child: new AppBar(
+            title: Text(
+              title,
+              style: TextStyle(color: mainColor, fontFamily: "songti"),
+            ),
+            backgroundColor: backgroundColor,
+            brightness: Brightness.light,
+            iconTheme: IconThemeData(color: mainColor),
+          ),
+          preferredSize: Size.fromHeight(45)),
     );
   }
 }
