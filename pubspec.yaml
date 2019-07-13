@@ -27,6 +27,8 @@ dependencies:
   sqflite: ^1.1.6
   shared_preferences: ^0.5.3+2
   webview_flutter: ^0.3.10
+  image_picker_saver: ^0.3.0
+  fluttertoast: ^3.1.0
 
 dev_dependencies:
   flutter_test:

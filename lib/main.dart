@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:audioplayer/audioplayer.dart';
 
-import 'gsc.dart';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:image_picker_saver/image_picker_saver.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'gsc.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
@@ -649,6 +652,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   List<Gsc> gscs;
   int index;
   Gsc gsc;
+  GlobalKey globalKey = GlobalKey();
 
   @override
   void initState() {
@@ -671,6 +675,38 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       fontFamily: "songkai",
       fontSize: 14,
       fontStyle: FontStyle.italic);
+
+  _capturePng() async {
+    try {
+      RenderRepaintBoundary boundary =
+          globalKey.currentContext.findRenderObject();
+      var image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData byteData = await image.toByteData(format: ImageByteFormat.png);
+      Uint8List pngBytes = byteData.buffer.asUint8List();
+      var result = await ImagePickerSaver.saveFile(
+          fileData: pngBytes, title: gsc.workTitle);
+      if (result.length != 0) {
+        Fluttertoast.showToast(
+            msg: "截图成功",
+            textColor: mainColor,
+            backgroundColor: backgroundColor,
+            gravity: ToastGravity.TOP);
+      } else {
+        Fluttertoast.showToast(
+            msg: "截图出错",
+            textColor: mainColor,
+            backgroundColor: backgroundColor,
+            gravity: ToastGravity.TOP);
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: "截图出错",
+          textColor: mainColor,
+          backgroundColor: backgroundColor,
+          gravity: ToastGravity.TOP);
+    }
+    return null;
+  }
 
   Widget renderContent() {
     var text = Text(gsc.content, style: style);
@@ -695,9 +731,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             gsc = gscs[index];
           });
         },
-        onLongPressEnd: (e) {
+        onLongPressEnd: (e) async {
           // 长按截图
-          print(e);
+          await _capturePng();
         },
         onHorizontalDragEnd: (e) {
           // 往左， 下一首
@@ -719,10 +755,15 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   Widget renderForeword() {
     if (gsc.foreword.length > 0) {
-      return Text(
-        gsc.foreword,
-        style: styleForeword,
-        textAlign: TextAlign.left,
+      return GestureDetector(
+        child: Text(
+          gsc.foreword,
+          style: styleForeword,
+          textAlign: TextAlign.left,
+        ),
+        onLongPressEnd: (e) async {
+          await _capturePng();
+        },
       );
     } else {
       return new Container(
@@ -815,11 +856,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   }
 
   renderAuthorBaiduWiki() {
-    var wikiUrl =
-        "https://baike.baidu.com/item/{}".replaceAll("{}", gsc.workAuthor);
-    if (gsc.workAuthor == "无名氏" || gsc.workAuthor == "佚名") {
-      wikiUrl = '';
-    }
+    var wikiUrl = '';
     if (gsc.authorIntro != null && gsc.authorIntro["baidu_wiki"] != "") {
       wikiUrl = gsc.authorIntro["baidu_wiki"];
     }
@@ -858,81 +895,84 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             ),
             preferredSize: Size.zero),
         backgroundColor: backgroundColor,
-        body: Center(
-            child: RefreshIndicator(
-                onRefresh: _refresh,
-                backgroundColor: backgroundColor,
-                color: mainColor,
-                child: ListView(
-                  padding:
-                      EdgeInsets.only(top: 0, left: 16, right: 16, bottom: 20),
-                  children: <Widget>[
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+        body: RepaintBoundary(
+            key: globalKey,
+            child: Container(
+                color: backgroundColor,
+                child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    backgroundColor: backgroundColor,
+                    color: mainColor,
+                    child: ListView(
+                      padding: EdgeInsets.only(
+                          top: 0, left: 16, right: 16, bottom: 20),
                       children: <Widget>[
-                        new GestureDetector(
-                          child: Text(
-                            gsc.workTitle,
-                            style: style,
-                            textAlign: TextAlign.center,
-                            maxLines: 3,
-                            softWrap: true,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              new MaterialPageRoute(
-                                  builder: (context) => new MyHomePage(
-                                        gsc: gsc,
-                                        from: "title",
-                                      )),
-                            );
-                          },
-                        ),
-                        Row(
+                        Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            Padding(
-                              child: renderPlayIcon(),
-                              padding: EdgeInsets.only(right: 8, top: 5),
-                            ),
-                            Padding(
-                              child: renderLikeIcon(),
-                              padding: EdgeInsets.only(top: 5),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        new GestureDetector(
-                          child: Text(
-                            "【" + gsc.workDynasty + "】" + gsc.workAuthor,
-                            style: style,
-                            textAlign: TextAlign.center,
-                          ),
-                          onTap: () => {
+                            new GestureDetector(
+                              child: Text(
+                                gsc.workTitle,
+                                style: style,
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                softWrap: true,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () {
                                 Navigator.push(
                                   context,
                                   new MaterialPageRoute(
                                       builder: (context) => new MyHomePage(
                                             gsc: gsc,
-                                            from: "author",
+                                            from: "title",
                                           )),
-                                )
+                                );
                               },
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Padding(
+                                  child: renderPlayIcon(),
+                                  padding: EdgeInsets.only(right: 8, top: 5),
+                                ),
+                                Padding(
+                                  child: renderLikeIcon(),
+                                  padding: EdgeInsets.only(top: 5),
+                                ),
+                              ],
+                            )
+                          ],
                         ),
-                        renderAuthorBaiduWiki()
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            new GestureDetector(
+                              child: Text(
+                                "【" + gsc.workDynasty + "】" + gsc.workAuthor,
+                                style: style,
+                                textAlign: TextAlign.center,
+                              ),
+                              onTap: () => {
+                                    Navigator.push(
+                                      context,
+                                      new MaterialPageRoute(
+                                          builder: (context) => new MyHomePage(
+                                                gsc: gsc,
+                                                from: "author",
+                                              )),
+                                    )
+                                  },
+                            ),
+                            renderAuthorBaiduWiki()
+                          ],
+                        ),
+                        renderForeword(), // foreword
+                        renderContent(), // 正文
+                        renderTabBar(),
                       ],
-                    ),
-                    renderForeword(), // foreword
-                    renderContent(), // 正文
-                    renderTabBar(),
-                  ],
-                ))));
+                    )))));
   }
 }
 
