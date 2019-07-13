@@ -653,13 +653,30 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   int index;
   Gsc gsc;
   GlobalKey globalKey = GlobalKey();
+  bool isPlaying;
+
+  AudioPlayer audioPlayer = new AudioPlayer();
+
+  ValueNotifier isPlayingNotifier = ValueNotifier(0);
 
   @override
   void initState() {
     gscs = widget.gscs;
     index = widget.index;
     gsc = gscs[index];
+    isPlaying = false;
     super.initState();
+    isPlayingNotifier.addListener(() {
+      if (!isPlaying && audioPlayer != null) {
+        audioPlayer.stop();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    audioPlayer = null;
+    super.dispose();
   }
 
   final TextStyle style = TextStyle(
@@ -729,7 +746,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
           setState(() {
             index = index;
             gsc = gscs[index];
+            isPlaying = false;
           });
+          isPlayingNotifier.value = gsc.id;
         },
         onLongPressEnd: (e) async {
           // 长按截图
@@ -749,7 +768,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
           setState(() {
             index = index;
             gsc = gscs[index];
+            isPlaying = false;
           });
+          isPlayingNotifier.value = gsc.id;
         });
   }
 
@@ -773,9 +794,27 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     }
   }
 
+  void togglePlaying() async {
+    if (!isPlaying) {
+      await audioPlayer.play(gsc.playUrl);
+    } else {
+      await audioPlayer.pause();
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+    isPlayingNotifier.value = gsc.id;
+  }
+
   Widget renderPlayIcon() {
     if (gsc.audioId > 0) {
-      return PlayAudioWidget(playUrl: gsc.playUrl);
+      if (isPlaying) {
+        return GestureDetector(
+            child: Icon(Icons.pause), onTap: () => {togglePlaying()});
+      } else {
+        return GestureDetector(
+            child: Icon(Icons.play_arrow), onTap: () => {togglePlaying()});
+      }
     }
     return new Container(
       width: 0,
@@ -852,7 +891,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     setState(() {
       index = index;
       gsc = gscs[index];
+      isPlaying = false;
     });
+    isPlayingNotifier.value = gsc.id;
   }
 
   renderAuthorBaiduWiki() {
