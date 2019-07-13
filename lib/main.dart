@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
@@ -9,7 +10,7 @@ import 'gsc.dart';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
@@ -152,8 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
         await httpClient.getUrl(Uri.parse(this.homeAip));
     request.headers.add("user-agent", "iGsc/1.0.0");
     HttpClientResponse response = await request.close();
-    String resp =
-        await response.cast<List<int>>().transform(utf8.decoder).join();
+    String resp = await response.transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
     gscList = [];
     for (var i = 0; i < gscs.length; i++) {
@@ -331,8 +331,7 @@ class _MyHomePageState extends State<MyHomePage> {
       HttpClientRequest request = await httpClient.getUrl(uri);
       request.headers.add("User-Agent", "iGsc/1.0.0");
       HttpClientResponse response = await request.close();
-      var resp =
-          await response.cast<List<int>>().transform(utf8.decoder).join();
+      var resp = await response.transform(utf8.decoder).join();
       gscs = jsonDecode(resp)["data"]["data"];
     }
     gscList = [];
@@ -815,6 +814,39 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     });
   }
 
+  renderAuthorBaiduWiki() {
+    var wikiUrl =
+        "https://baike.baidu.com/item/{}".replaceAll("{}", gsc.workAuthor);
+    if (gsc.workAuthor == "无名氏" || gsc.workAuthor == "佚名") {
+      wikiUrl = '';
+    }
+    if (gsc.authorIntro != null && gsc.authorIntro["baidu_wiki"] != "") {
+      wikiUrl = gsc.authorIntro["baidu_wiki"];
+    }
+    if (wikiUrl != '') {
+      return GestureDetector(
+        child: Padding(
+          child: Icon(
+            Icons.link,
+            size: 18,
+          ),
+          padding: EdgeInsets.only(left: 10),
+        ),
+        onTap: () async {
+          Navigator.push(
+              context,
+              new MaterialPageRoute(
+                  builder: (context) => new WebViewWidget(
+                        url: wikiUrl,
+                        title: gsc.workAuthor + "介绍",
+                      )));
+        },
+      );
+    } else {
+      return Container(width: 0, height: 0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -873,54 +905,29 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                         )
                       ],
                     ),
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: <
-                        Widget>[
-                      new GestureDetector(
-                        child: Text(
-                          "【" + gsc.workDynasty + "】" + gsc.workAuthor,
-                          style: style,
-                          textAlign: TextAlign.center,
-                        ),
-                        onTap: () => {
-                              Navigator.push(
-                                context,
-                                new MaterialPageRoute(
-                                    builder: (context) => new MyHomePage(
-                                          gsc: gsc,
-                                          from: "author",
-                                        )),
-                              )
-                            },
-                      ),
-                      () {
-                        if (gsc.authorIntro != null &&
-                            gsc.authorIntro["baidu_wiki"] != "") {
-                          return GestureDetector(
-                            child: Padding(
-                              child: Icon(
-                                Icons.link,
-                                size: 18,
-                              ),
-                              padding: EdgeInsets.only(left: 10),
-                            ),
-                            onTap: () async {
-                              Navigator.push(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        new GestureDetector(
+                          child: Text(
+                            "【" + gsc.workDynasty + "】" + gsc.workAuthor,
+                            style: style,
+                            textAlign: TextAlign.center,
+                          ),
+                          onTap: () => {
+                                Navigator.push(
                                   context,
                                   new MaterialPageRoute(
-                                      builder: (context) => new WebviewWidget(
-                                            url: gsc.authorIntro["baidu_wiki"],
-                                            title: gsc.workAuthor + "简介",
-                                          )));
-                            },
-                          );
-                        } else {
-                          return Container(
-                            width: 0,
-                            height: 0,
-                          );
-                        }
-                      }()
-                    ]),
+                                      builder: (context) => new MyHomePage(
+                                            gsc: gsc,
+                                            from: "author",
+                                          )),
+                                )
+                              },
+                        ),
+                        renderAuthorBaiduWiki()
+                      ],
+                    ),
                     renderForeword(), // foreword
                     renderContent(), // 正文
                     renderTabBar(),
@@ -1164,36 +1171,90 @@ class _MyTabBarState extends State<MyTabBar> {
   }
 }
 
-class WebviewWidget extends StatelessWidget {
+class WebViewWidget extends StatefulWidget {
   final String url;
   final String title;
 
-  const WebviewWidget({Key key, this.url, this.title}) : super(key: key);
+  const WebViewWidget({Key key, @required this.url, this.title})
+      : super(key: key);
+
+  @override
+  WebviewWidgetSate createState() {
+    return new WebviewWidgetSate();
+  }
+}
+
+class WebviewWidgetSate extends State<WebViewWidget> {
+  bool complete;
+  WebViewController webViewController;
+
+  @override
+  void initState() {
+    complete = false;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return WebviewScaffold(
-      url: url,
-      scrollBar: false,
-      withJavascript: true,
-      withLocalStorage: true,
-      withZoom: true,
-      hidden: true,
-      appBar: PreferredSize(
-          child: new AppBar(
-              elevation: 0,
-              centerTitle: true,
-              title: Text(
-                title,
-                style: TextStyle(color: mainColor, fontFamily: "songti"),
-              ),
-              backgroundColor: backgroundColor,
-              brightness: Brightness.light,
-              iconTheme: IconThemeData(color: mainColor)),
-          preferredSize: Size.fromHeight(40)),
-      initialChild: Container(
-          color: backgroundColor,
-          child: Center(child: new CupertinoActivityIndicator(radius: 25))),
-    );
+    var height, loadingHeight = 0.0;
+    if (complete) {
+      loadingHeight = height;
+      height = MediaQuery.of(context).size.height - 85;
+    } else {
+      height = loadingHeight;
+      loadingHeight = MediaQuery.of(context).size.height - 85;
+    }
+    return Scaffold(
+        appBar: PreferredSize(
+            child: new AppBar(
+                elevation: 0,
+                centerTitle: true,
+                title: Text(
+                  widget.title,
+                  style: TextStyle(
+                      color: mainColor, fontFamily: "songkai", fontSize: 16),
+                ),
+                backgroundColor: backgroundColor,
+                brightness: Brightness.light,
+                iconTheme: IconThemeData(color: mainColor, opacity: 0)),
+            preferredSize: Size.fromHeight(40)),
+        body: Container(
+          child: Column(
+            children: <Widget>[
+              () {
+                if (!complete) {
+                  return Container(
+                      height: loadingHeight,
+                      color: backgroundColor,
+                      child: Center(
+                          child: Center(
+                              child:
+                                  new CupertinoActivityIndicator(radius: 25))));
+                } else {
+                  return Container(
+                    width: 0,
+                    height: 0,
+                  );
+                }
+              }(),
+              () {
+                return Container(
+                    height: height,
+                    child: WebView(
+                      initialUrl: widget.url,
+                      javascriptMode: JavascriptMode.unrestricted,
+                      onWebViewCreated: (e) {
+                        webViewController = e;
+                      },
+                      onPageFinished: (e) async {
+                        setState(() {
+                          complete = true;
+                        });
+                      },
+                    ));
+              }()
+            ],
+          ),
+        ));
   }
 }
