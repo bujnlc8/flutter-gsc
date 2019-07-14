@@ -51,6 +51,6 @@
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>保存截图到图库</string>
+	<string>保存截图到照片</string>
 </dict>
 </plist>

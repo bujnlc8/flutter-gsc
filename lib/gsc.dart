@@ -121,11 +121,6 @@ class Gsc {
     if (authorIntro != null) {
       this.authorIntro = new Map.from(authorIntro);
       this.authorIntro["intro"] = "　　" +
-          "公元（" +
-          this.authorIntro["birth_year"] +
-          "-" +
-          this.authorIntro["death_year"] +
-          "）。" +
           this
               .authorIntro["intro"]
               .replaceAll("　", "")

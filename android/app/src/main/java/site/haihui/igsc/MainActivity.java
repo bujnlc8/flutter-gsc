@@ -1,4 +1,4 @@
-package com.example.igsc;
+package site.haihui.igsc;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

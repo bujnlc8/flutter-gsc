@@ -654,6 +654,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   Gsc gsc;
   GlobalKey globalKey = GlobalKey();
   bool isPlaying;
+  bool showTabar;
 
   AudioPlayer audioPlayer = new AudioPlayer();
 
@@ -665,11 +666,25 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     index = widget.index;
     gsc = gscs[index];
     isPlaying = false;
+    showTabar = false;
     super.initState();
     isPlayingNotifier.addListener(() {
       if (!isPlaying && audioPlayer != null) {
         audioPlayer.stop();
       }
+    });
+
+    audioPlayer.onPlayerStateChanged.listen((onData) {
+      if (onData == AudioPlayerState.STOPPED) {
+        setState(() {
+          isPlaying = false;
+        });
+      }
+    }, onError: (msg) {
+      setState(() {
+        isPlaying = false;
+      });
+      debugPrint(msg);
     });
   }
 
@@ -747,6 +762,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             index = index;
             gsc = gscs[index];
             isPlaying = false;
+            showTabar = false;
           });
           isPlayingNotifier.value = gsc.id;
         },
@@ -763,12 +779,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
               index += 1;
             }
           } else {
-            return null;
+            _refresh();
           }
           setState(() {
             index = index;
             gsc = gscs[index];
             isPlaying = false;
+            showTabar = false;
           });
           isPlayingNotifier.value = gsc.id;
         });
@@ -852,33 +869,39 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   }
 
   renderTabBar() {
-    var result = <MyTabItem>[];
-    if (gsc.authorIntro != null) {
-      result
-          .add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
+    if (showTabar) {
+      var result = <MyTabItem>[];
+      if (gsc.authorIntro != null) {
+        result.add(
+            MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
+      }
+      if (gsc.intro.length > 0) {
+        result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
+      }
+      if (gsc.annotation.length > 0) {
+        result.add(MyTabItem(tabName: "注释", tabContent: gsc.annotation));
+      }
+      if (gsc.translation.length > 0) {
+        result.add(MyTabItem(tabName: "译文", tabContent: gsc.translation));
+      }
+      if (gsc.appreciation.length > 0) {
+        result.add(MyTabItem(tabName: "赏析", tabContent: gsc.appreciation));
+      }
+      if (gsc.masterComment.length > 0) {
+        result.add(MyTabItem(tabName: "辑评", tabContent: gsc.masterComment));
+      }
+      if (result.length == 0) {
+        return new Container(
+          width: 0,
+          height: 0,
+        );
+      }
+      return MyTabBar(children: result);
     }
-    if (gsc.intro.length > 0) {
-      result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
-    }
-    if (gsc.annotation.length > 0) {
-      result.add(MyTabItem(tabName: "注释", tabContent: gsc.annotation));
-    }
-    if (gsc.translation.length > 0) {
-      result.add(MyTabItem(tabName: "译文", tabContent: gsc.translation));
-    }
-    if (gsc.appreciation.length > 0) {
-      result.add(MyTabItem(tabName: "赏析", tabContent: gsc.appreciation));
-    }
-    if (gsc.masterComment.length > 0) {
-      result.add(MyTabItem(tabName: "辑评", tabContent: gsc.masterComment));
-    }
-    if (result.length == 0) {
-      return new Container(
-        width: 0,
-        height: 0,
-      );
-    }
-    return MyTabBar(children: result);
+    return Container(
+      width: 0,
+      height: 0,
+    );
   }
 
   Future<void> _refresh() async {
@@ -892,6 +915,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       index = index;
       gsc = gscs[index];
       isPlaying = false;
+      showTabar = false;
     });
     isPlayingNotifier.value = gsc.id;
   }
@@ -936,6 +960,40 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             ),
             preferredSize: Size.zero),
         backgroundColor: backgroundColor,
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: FloatingActionButton(
+          foregroundColor: mainColor,
+          elevation: 0,
+          child: () {
+            if (showTabar) {
+              return Icon(Icons.radio_button_unchecked);
+            } else {
+              return Icon(Icons.radio_button_checked);
+            }
+          }(),
+          mini: () {
+            return !showTabar;
+          }(),
+          backgroundColor: () {
+            if (showTabar) {
+              return Color.fromARGB(180, 0xa8, 0xa8, 0xa8);
+            } else {
+              return Color.fromARGB(180, 0xe8, 0xe8, 0xe8);
+            }
+          }(),
+          onPressed: () {
+            setState(() {
+              showTabar = !showTabar;
+            });
+            // print(context.size.height);
+            // if(showTabar){
+            //   _scrollController.animateTo(
+            //     globalKey.currentContext.size.height,
+            //     curve: Curves.easeOut, duration: Duration(milliseconds: 500));
+            // }
+          },
+        ),
         body: RepaintBoundary(
             key: globalKey,
             child: Container(
@@ -1014,88 +1072,6 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                         renderTabBar(),
                       ],
                     )))));
-  }
-}
-
-class PlayAudioWidget extends StatefulWidget {
-  final String playUrl;
-
-  @override
-  _PlayAudioWidgetState createState() {
-    return new _PlayAudioWidgetState();
-  }
-
-  PlayAudioWidget({Key key, @required this.playUrl})
-      : assert(playUrl.length > 0),
-        super(key: key);
-}
-
-class _PlayAudioWidgetState extends State<PlayAudioWidget> {
-  // 是否在播放
-  bool isPlaying;
-
-  // 播放链接
-  String playUrl;
-
-  final AudioPlayer audioPlayer = new AudioPlayer();
-
-  @override
-  void initState() {
-    super.initState();
-    isPlaying = false;
-    playUrl = widget.playUrl;
-  }
-
-  @override
-  void didUpdateWidget(PlayAudioWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (playUrl != widget.playUrl) {
-      audioPlayer.pause();
-      setState(() {
-        isPlaying = false;
-        playUrl = widget.playUrl;
-      });
-    }
-  }
-
-  _PlayAudioWidgetState() {
-    audioPlayer.onPlayerStateChanged.listen((onData) {
-      if (onData == AudioPlayerState.STOPPED) {
-        setState(() {
-          playUrl = widget.playUrl;
-          isPlaying = false;
-        });
-      }
-    }, onError: (msg) {
-      setState(() {
-        playUrl = widget.playUrl;
-        isPlaying = false;
-      });
-      debugPrint(msg);
-    });
-  }
-
-  void togglePlaying() async {
-    if (!isPlaying) {
-      await audioPlayer.play(widget.playUrl);
-    } else {
-      await audioPlayer.pause();
-    }
-    setState(() {
-      isPlaying = !isPlaying;
-      playUrl = widget.playUrl;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (isPlaying) {
-      return GestureDetector(
-          child: Icon(Icons.pause), onTap: () => {this.togglePlaying()});
-    } else {
-      return GestureDetector(
-          child: Icon(Icons.play_arrow), onTap: () => {this.togglePlaying()});
-    }
   }
 }
 
@@ -1200,7 +1176,7 @@ class _MyTabBarState extends State<MyTabBar> {
     if (item == currentIndex) {
       return Image(
         image: AssetImage("assets/line.png"),
-        height: 4.5,
+        height: 4,
       );
     } else {
       return Container(
@@ -1220,11 +1196,11 @@ class _MyTabBarState extends State<MyTabBar> {
             highlightColor: mainColor,
             child: Text(
               children[i].tabName,
-              maxLines: 1,
+              maxLines: 2,
               style: TextStyle(
                   fontFamily: "songkai",
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900),
             ),
             onPressed: () {
               setState(() {
@@ -1255,7 +1231,6 @@ class _MyTabBarState extends State<MyTabBar> {
 class WebViewWidget extends StatefulWidget {
   final String url;
   final String title;
-
   const WebViewWidget({Key key, @required this.url, this.title})
       : super(key: key);
 
@@ -1278,12 +1253,13 @@ class WebviewWidgetSate extends State<WebViewWidget> {
   @override
   Widget build(BuildContext context) {
     var height, loadingHeight = 0.0;
+    var padding = MediaQuery.of(context).padding.top;
     if (complete) {
       loadingHeight = height;
-      height = MediaQuery.of(context).size.height - 85;
+      height = MediaQuery.of(context).size.height - 40 - padding;
     } else {
       height = loadingHeight;
-      loadingHeight = MediaQuery.of(context).size.height - 85;
+      loadingHeight = MediaQuery.of(context).size.height - 40 - padding;
     }
     return Scaffold(
         appBar: PreferredSize(
