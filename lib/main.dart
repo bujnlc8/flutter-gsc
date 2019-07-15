@@ -986,35 +986,26 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             setState(() {
               showTabar = !showTabar;
             });
-            // print(context.size.height);
-            // if(showTabar){
-            //   _scrollController.animateTo(
-            //     globalKey.currentContext.size.height,
-            //     curve: Curves.easeOut, duration: Duration(milliseconds: 500));
-            // }
           },
         ),
-        body: RepaintBoundary(
-            key: globalKey,
-            child: Container(
-                color: backgroundColor,
-                child: RefreshIndicator(
-                    onRefresh: _refresh,
-                    backgroundColor: backgroundColor,
-                    color: mainColor,
-                    child: ListView(
-                      padding: EdgeInsets.only(
-                          top: 0, left: 16, right: 16, bottom: 20),
-                      children: <Widget>[
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+        body: SingleChildScrollView(
+            child: RepaintBoundary(
+                key: globalKey,
+                child: Container(
+                    color: backgroundColor,
+                    child: Padding(
+                        padding:
+                            EdgeInsets.only(left: 18, right: 18, bottom: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: <Widget>[
-                            new GestureDetector(
+                            Container(
+                                child: new GestureDetector(
                               child: Text(
                                 gsc.workTitle,
                                 style: style,
                                 textAlign: TextAlign.center,
-                                maxLines: 3,
+                                maxLines: 2,
                                 softWrap: true,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1028,7 +1019,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                                           )),
                                 );
                               },
-                            ),
+                            )),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
@@ -1041,37 +1032,39 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                                   padding: EdgeInsets.only(top: 5),
                                 ),
                               ],
-                            )
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            new GestureDetector(
-                              child: Text(
-                                "【" + gsc.workDynasty + "】" + gsc.workAuthor,
-                                style: style,
-                                textAlign: TextAlign.center,
-                              ),
-                              onTap: () => {
-                                    Navigator.push(
-                                      context,
-                                      new MaterialPageRoute(
-                                          builder: (context) => new MyHomePage(
-                                                gsc: gsc,
-                                                from: "author",
-                                              )),
-                                    )
-                                  },
                             ),
-                            renderAuthorBaiduWiki()
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                new GestureDetector(
+                                  child: Text(
+                                    "【" +
+                                        gsc.workDynasty +
+                                        "】" +
+                                        gsc.workAuthor,
+                                    style: style,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  onTap: () => {
+                                        Navigator.push(
+                                          context,
+                                          new MaterialPageRoute(
+                                              builder: (context) =>
+                                                  new MyHomePage(
+                                                    gsc: gsc,
+                                                    from: "author",
+                                                  )),
+                                        )
+                                      },
+                                ),
+                                renderAuthorBaiduWiki()
+                              ],
+                            ),
+                            renderForeword(), // foreword
+                            renderContent(), // 正文
+                            renderTabBar(), // TabBar
                           ],
-                        ),
-                        renderForeword(), // foreword
-                        renderContent(), // 正文
-                        renderTabBar(),
-                      ],
-                    )))));
+                        ))))));
   }
 }
 
