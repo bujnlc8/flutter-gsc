@@ -660,6 +660,10 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   ValueNotifier isPlayingNotifier = ValueNotifier(0);
 
+  ScrollController scrollController = ScrollController();
+
+  double tabBarOffset;
+
   @override
   void initState() {
     gscs = widget.gscs;
@@ -667,6 +671,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     gsc = gscs[index];
     isPlaying = false;
     showTabar = false;
+    tabBarOffset = 0;
     super.initState();
     isPlayingNotifier.addListener(() {
       if (!isPlaying && audioPlayer != null) {
@@ -763,6 +768,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             gsc = gscs[index];
             isPlaying = false;
             showTabar = false;
+            tabBarOffset=0;
           });
           isPlayingNotifier.value = gsc.id;
         },
@@ -786,6 +792,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             gsc = gscs[index];
             isPlaying = false;
             showTabar = false;
+            tabBarOffset=0;
           });
           isPlayingNotifier.value = gsc.id;
         });
@@ -868,39 +875,37 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     );
   }
 
-  renderTabBar() {
-    if (showTabar) {
-      var result = <MyTabItem>[];
-      if (gsc.authorIntro != null) {
-        result.add(
-            MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
-      }
-      if (gsc.intro.length > 0) {
-        result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
-      }
-      if (gsc.annotation.length > 0) {
-        result.add(MyTabItem(tabName: "注释", tabContent: gsc.annotation));
-      }
-      if (gsc.translation.length > 0) {
-        result.add(MyTabItem(tabName: "译文", tabContent: gsc.translation));
-      }
-      if (gsc.appreciation.length > 0) {
-        result.add(MyTabItem(tabName: "赏析", tabContent: gsc.appreciation));
-      }
-      if (gsc.masterComment.length > 0) {
-        result.add(MyTabItem(tabName: "辑评", tabContent: gsc.masterComment));
-      }
-      if (result.length == 0) {
-        return new Container(
-          width: 0,
-          height: 0,
-        );
-      }
-      return MyTabBar(children: result);
+  renderTabBar(Key anotherGlobalKey) {
+    var result = <MyTabItem>[];
+    if (gsc.authorIntro != null) {
+      result
+          .add(MyTabItem(tabName: "作者", tabContent: gsc.authorIntro["intro"]));
     }
-    return Container(
-      width: 0,
-      height: 0,
+    if (gsc.intro.length > 0) {
+      result.add(MyTabItem(tabName: "评析", tabContent: gsc.intro));
+    }
+    if (gsc.annotation.length > 0) {
+      result.add(MyTabItem(tabName: "注释", tabContent: gsc.annotation));
+    }
+    if (gsc.translation.length > 0) {
+      result.add(MyTabItem(tabName: "译文", tabContent: gsc.translation));
+    }
+    if (gsc.appreciation.length > 0) {
+      result.add(MyTabItem(tabName: "赏析", tabContent: gsc.appreciation));
+    }
+    if (gsc.masterComment.length > 0) {
+      result.add(MyTabItem(tabName: "辑评", tabContent: gsc.masterComment));
+    }
+    if (result.length == 0) {
+      return new Container(
+        width: 0,
+        height: 0,
+      );
+    }
+    return MyTabBar(
+      children: result,
+      key: anotherGlobalKey,
+      show: showTabar,
     );
   }
 
@@ -916,6 +921,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       gsc = gscs[index];
       isPlaying = false;
       showTabar = false;
+      tabBarOffset=0;
     });
     isPlayingNotifier.value = gsc.id;
   }
@@ -951,6 +957,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    GlobalKey anotherGlobalKey = GlobalKey();
     return new Scaffold(
         appBar: PreferredSize(
             child: new AppBar(
@@ -983,12 +990,29 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             }
           }(),
           onPressed: () {
+            if (anotherGlobalKey.currentContext != null && !showTabar) {
+              if (tabBarOffset == 0.0) {
+                RenderBox box =
+                  anotherGlobalKey.currentContext.findRenderObject();
+                 tabBarOffset = box.localToGlobal(Offset.zero).dy - 20;
+              }
+              scrollController.animateTo(tabBarOffset,
+                  curve: Curves.easeInOut,
+                  duration: Duration(milliseconds: 300));
+            }
+            if(showTabar){
+              scrollController.animateTo(0,
+                  curve: Curves.easeInOut,
+                  duration: Duration(milliseconds: 300));
+            }
             setState(() {
               showTabar = !showTabar;
+              tabBarOffset = tabBarOffset;
             });
           },
         ),
         body: SingleChildScrollView(
+            controller: scrollController,
             child: RepaintBoundary(
                 key: globalKey,
                 child: Container(
@@ -1062,7 +1086,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                             ),
                             renderForeword(), // foreword
                             renderContent(), // 正文
-                            renderTabBar(), // TabBar
+                            renderTabBar(anotherGlobalKey), // TabBar
                           ],
                         ))))));
   }
@@ -1089,13 +1113,14 @@ class MyTabItem extends StatelessWidget {
 
 class MyTabBar extends StatefulWidget {
   final List<MyTabItem> children;
+  final bool show;
 
   @override
   _MyTabBarState createState() {
     return new _MyTabBarState();
   }
 
-  MyTabBar({Key key, this.children})
+  MyTabBar({Key key, this.children, this.show = true})
       : assert(children.length > 0),
         super(key: key);
 }
@@ -1181,6 +1206,12 @@ class _MyTabBarState extends State<MyTabBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.show) {
+      return Container(
+        width: 0,
+        height: 0,
+      );
+    }
     var result = <Widget>[];
     for (var i = 0; i < children.length; i++) {
       result.add(Expanded(
