@@ -17,6 +17,7 @@ import 'gsc.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -634,6 +635,13 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             )));
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+    dB.db.close();
+    print("dispose...");
+  }
 }
 
 class GscDetailScreen extends StatefulWidget {
@@ -721,23 +729,24 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       ByteData byteData = await image.toByteData(format: ImageByteFormat.png);
       Uint8List pngBytes = byteData.buffer.asUint8List();
       var result = await ImagePickerSaver.saveFile(
-          fileData: pngBytes, title: gsc.workTitle);
+          fileData: pngBytes, title: gsc.workTitle + "-" + gsc.workAuthor);
       if (result.length != 0) {
         Fluttertoast.showToast(
-            msg: "截图成功",
+            msg: "截图成功~",
             textColor: mainColor,
             backgroundColor: backgroundColor,
             gravity: ToastGravity.TOP);
       } else {
         Fluttertoast.showToast(
-            msg: "截图出错",
+            msg: "截图出错~",
             textColor: mainColor,
             backgroundColor: backgroundColor,
             gravity: ToastGravity.TOP);
       }
     } catch (e) {
+      debugPrint(e);
       Fluttertoast.showToast(
-          msg: "截图出错",
+          msg: "截图出错~",
           textColor: mainColor,
           backgroundColor: backgroundColor,
           gravity: ToastGravity.TOP);
@@ -768,7 +777,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             gsc = gscs[index];
             isPlaying = false;
             showTabar = false;
-            tabBarOffset=0;
+            tabBarOffset = 0;
           });
           isPlayingNotifier.value = gsc.id;
         },
@@ -792,7 +801,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
             gsc = gscs[index];
             isPlaying = false;
             showTabar = false;
-            tabBarOffset=0;
+            tabBarOffset = 0;
           });
           isPlayingNotifier.value = gsc.id;
         });
@@ -921,7 +930,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       gsc = gscs[index];
       isPlaying = false;
       showTabar = false;
-      tabBarOffset=0;
+      tabBarOffset = 0;
     });
     isPlayingNotifier.value = gsc.id;
   }
@@ -958,6 +967,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   @override
   Widget build(BuildContext context) {
     GlobalKey anotherGlobalKey = GlobalKey();
+    var screenHeight = MediaQuery.of(context).size.height;
+    var padding = MediaQuery.of(context).padding.top;
+    double visibleHeight = screenHeight - padding;
     return new Scaffold(
         appBar: PreferredSize(
             child: new AppBar(
@@ -991,19 +1003,31 @@ class GscDetailScreenState extends State<GscDetailScreen> {
           }(),
           onPressed: () {
             if (anotherGlobalKey.currentContext != null && !showTabar) {
-              if (tabBarOffset == 0.0) {
-                RenderBox box =
+              // 高度不好获取
+              double bottomHeight = 220;
+              RenderBox box =
                   anotherGlobalKey.currentContext.findRenderObject();
-                 tabBarOffset = box.localToGlobal(Offset.zero).dy - 20;
+              if (tabBarOffset == 0.0) {
+                tabBarOffset = box.localToGlobal(Offset.zero).dy;
+                if (bottomHeight > screenHeight - padding) {
+                  bottomHeight = visibleHeight;
+                }
+                tabBarOffset = tabBarOffset + bottomHeight + scrollController.offset;
               }
-              scrollController.animateTo(tabBarOffset,
-                  curve: Curves.easeInOut,
-                  duration: Duration(milliseconds: 300));
+              if (tabBarOffset > visibleHeight) {
+                double scrollDistance =
+                    (tabBarOffset ~/ visibleHeight - 1) * visibleHeight +
+                        tabBarOffset % visibleHeight;
+                scrollController.animateTo(scrollDistance,
+                    curve: Curves.easeInOut,
+                    duration: Duration(
+                        milliseconds: (500 * scrollDistance ~/ visibleHeight) + 300));
+              }
             }
-            if(showTabar){
+            if (showTabar) {
               scrollController.animateTo(0,
-                  curve: Curves.easeInOut,
-                  duration: Duration(milliseconds: 300));
+                  curve: Curves.easeOut,
+                  duration: Duration(milliseconds: 800));
             }
             setState(() {
               showTabar = !showTabar;
@@ -1242,12 +1266,17 @@ class _MyTabBarState extends State<MyTabBar> {
           child: Text(""),
         ));
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: result),
-        getContent()
-      ],
+
+    return AnimatedOpacity(
+      opacity: 1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: result),
+          getContent()
+        ],
+      ),
+      duration: Duration(milliseconds: 500),
     );
   }
 }
@@ -1278,6 +1307,11 @@ class WebviewWidgetSate extends State<WebViewWidget> {
   Widget build(BuildContext context) {
     var height, loadingHeight = 0.0;
     var padding = MediaQuery.of(context).padding.top;
+    if (Platform.isAndroid) {
+      setState(() {
+        complete = true;
+      });
+    }
     if (complete) {
       loadingHeight = height;
       height = MediaQuery.of(context).size.height - 40 - padding;
@@ -1323,7 +1357,7 @@ class WebviewWidgetSate extends State<WebViewWidget> {
                     height: height,
                     child: WebView(
                       initialUrl: widget.url,
-                      javascriptMode: JavascriptMode.unrestricted,
+                      javascriptMode: JavascriptMode.disabled,
                       onWebViewCreated: (e) {
                         webViewController = e;
                       },

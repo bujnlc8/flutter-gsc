@@ -3,6 +3,82 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
+class MyDb {
+  Database db;
+  initDb() async {
+    db = await openDatabase("gsc_like.db", version: 3,
+        onCreate: (Database db, int version) async {
+      await db.transaction((tx) async {
+        await tx.execute("""
+            CREATE TABLE `gsc_like`( 
+            `id` integer NOT NULL,
+            `work_title` varchar(512) NOT NULL DEFAULT '',
+            `work_author` varchar(512) NOT NULL DEFAULT '',
+            `work_dynasty` varchar(32) NOT NULL DEFAULT '',
+            `content` text NOT NULL default '',
+            `translation` text NOT NULL default '',
+            `intro` text,
+            `author_intro` text,
+            `baidu_wiki` varchar(256) default '',
+            `audio_id` integer not null default 0,
+            `foreword` text,
+            `annotation` text ,
+            `appreciation` text ,
+            `master_comment` text ,
+            `layout` varchar(10) DEFAULT 'indent', 
+            `like` tinyint NOT NULL default 0,
+            `short_content` varchar(256) NOT NULL DEFAULT '',
+            `play_url` varchar(256) NOT NULL DEFAULT '',
+            `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP);
+            """);
+      });
+    });
+  }
+
+  Future<int> insert(String tableName, Map<String, dynamic> map) async {
+    return await db.insert(tableName, map);
+  }
+
+  Future<int> delete(String tableName, int id) async {
+    return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map>> query(
+    String tableName,
+    List<String> columns,
+    String where,
+    List<dynamic> whereArgs,
+  ) async {
+    if (db == null) {
+      return null;
+    }
+    List<Map> maps = await db.query(tableName,
+        columns: columns, where: where, whereArgs: whereArgs);
+    return maps;
+  }
+
+  MyDb() {
+    initDb();
+  }
+}
+
+final MyDb dB = new MyDb();
+
+class Author {
+  Map authors;
+
+  initAuthor() async {
+    String authorString = await rootBundle.loadString("data/authors.json");
+    authors = json.decode(authorString);
+  }
+
+  Author() {
+    initAuthor();
+  }
+}
+
+final Author authorM = Author();
+
 class Gsc {
   int id;
   int audioId;
@@ -129,11 +205,11 @@ class Gsc {
   }
 
   isLiked() async {
-    if (dB.db == null) {
-      await dB.initDb();
+    if (dB == null || dB.db == null) {
+      return false;
     }
     var maps =
-        await dB.query("gsc_like", ["id"], "id = ? and `like` = 1", [this.id]);
+        await dB.query("gsc_like", ["id"], "id = ? and `like` = ?", [this.id, 1]);
     if (maps.length > 0) {
       this.like = 1;
     } else {
@@ -143,8 +219,8 @@ class Gsc {
   }
 
   toLike() async {
-    if (dB.db == null) {
-      await dB.initDb();
+    if (dB == null || dB.db == null) {
+      return false;
     }
     var map = this.toMap();
     map["like"] = 1;
@@ -152,8 +228,8 @@ class Gsc {
   }
 
   disLike() async {
-    if (dB.db == null) {
-      await dB.initDb();
+    if (dB == null || dB.db == null) {
+      return false;
     }
     await dB.delete("gsc_like", this.id);
   }
@@ -199,76 +275,3 @@ class Gsc {
     this.authorIntro = json.decode(gsc["author_intro"]);
   }
 }
-
-class MyDb {
-  Database db;
-  initDb() async {
-    db = await openDatabase("gsclike.db", version: 3,
-        onCreate: (Database db, int version) async {
-      await db.transaction((tx) async {
-        await tx.execute("""
-            CREATE TABLE `gsc_like`( 
-            `id` integer NOT NULL,
-            `work_title` varchar(512) NOT NULL DEFAULT '',
-            `work_author` varchar(512) NOT NULL DEFAULT '',
-            `work_dynasty` varchar(32) NOT NULL DEFAULT '',
-            `content` text NOT NULL default '',
-            `translation` text NOT NULL default '',
-            `intro` text,
-            `author_intro` text,
-            `baidu_wiki` varchar(256) default '',
-            `audio_id` integer not null default 0,
-            `foreword` text,
-            `annotation` text ,
-            `appreciation` text ,
-            `master_comment` text ,
-            `layout` varchar(10) DEFAULT 'indent', 
-            `like` tinyint NOT NULL default 0,
-            `short_content` varchar(256) NOT NULL DEFAULT '',
-            `play_url` varchar(256) NOT NULL DEFAULT '',
-            `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP);
-            """);
-      });
-    });
-  }
-
-  Future<int> insert(String tableName, Map<String, dynamic> map) async {
-    return await db.insert(tableName, map);
-  }
-
-  Future<int> delete(String tableName, int id) async {
-    return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
-  }
-
-  Future<List<Map>> query(
-    String tableName,
-    List<String> columns,
-    String where,
-    List<dynamic> whereArgs,
-  ) async {
-    List<Map> maps = await db.query(tableName,
-        columns: columns, where: where, whereArgs: whereArgs);
-    return maps;
-  }
-
-  MyDb() {
-    initDb();
-  }
-}
-
-MyDb dB = new MyDb();
-
-class Author {
-  Map authors;
-
-  initAuthor() async {
-    String authorString = await rootBundle.loadString("data/authors.json");
-    authors = json.decode(authorString);
-  }
-
-  Author() {
-    initAuthor();
-  }
-}
-
-Author authorM = Author();
