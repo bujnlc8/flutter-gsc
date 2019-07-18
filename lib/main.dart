@@ -18,6 +18,7 @@ import 'gsc.dart';
 
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
+const toastBackgroundColor = Color.fromARGB(255, 255, 255, 255);
 
 void main() => runApp(MyApp());
 
@@ -776,13 +777,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
         Fluttertoast.showToast(
             msg: "截图成功~",
             textColor: mainColor,
-            backgroundColor: backgroundColor,
+            backgroundColor: toastBackgroundColor,
             gravity: ToastGravity.TOP);
       } else {
         Fluttertoast.showToast(
             msg: "截图出错~",
             textColor: mainColor,
-            backgroundColor: backgroundColor,
+            backgroundColor: toastBackgroundColor,
             gravity: ToastGravity.TOP);
       }
     } catch (e) {
@@ -790,7 +791,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       Fluttertoast.showToast(
           msg: "截图出错~",
           textColor: mainColor,
-          backgroundColor: backgroundColor,
+          backgroundColor: toastBackgroundColor,
           gravity: ToastGravity.TOP);
     }
     return null;
@@ -807,25 +808,20 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     }
     return GestureDetector(
         child: text,
-        onDoubleTap: () {
-          // 双击回到上一首
-          if (index == 0) {
-            index = gscs.length - 1;
-          } else {
-            index -= 1;
-          }
-          setState(() {
-            index = index;
-            gsc = gscs[index];
-            isPlaying = false;
-            showTabar = false;
-            tabBarOffset = 0;
-          });
-          isPlayingNotifier.value = gsc.id;
-        },
-        onLongPressEnd: (e) async {
-          // 长按截图
+        onDoubleTap: () async{
+          // 双击截图
           await _capturePng();
+        },
+        onLongPressEnd: (e) {
+          // 长按复制内容
+          var data = "标题：" + gsc.workTitle + "\n作者：" + gsc.workDynasty + 
+            "·" + gsc.workAuthor + "\n正文：\n" + gsc.content;
+          Clipboard.setData(new ClipboardData(text: data));
+          Fluttertoast.showToast(
+            msg: "复制成功~",
+            textColor: mainColor,
+            backgroundColor: toastBackgroundColor,
+            gravity: ToastGravity.TOP);
         },
         onHorizontalDragEnd: (e) {
           // 往左， 下一首
