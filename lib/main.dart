@@ -7,7 +7,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:audioplayer/audioplayer.dart';
+
+import 'package:flutter_background_audio/flutter_background_audio.dart';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,8 @@ import 'gsc.dart';
 const mainColor = Color.fromARGB(255, 98, 91, 87);
 const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
 const toastBackgroundColor = Color.fromARGB(255, 255, 255, 255);
+
+int currentPlayId = 0;
 
 void main() => runApp(MyApp());
 
@@ -692,7 +695,8 @@ class GscDetailScreen extends StatefulWidget {
   }
 }
 
-class GscDetailScreenState extends State<GscDetailScreen> {
+class GscDetailScreenState extends State<GscDetailScreen>
+    with WidgetsBindingObserver {
   List<Gsc> gscs;
   int index;
   Gsc gsc;
@@ -700,53 +704,53 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   bool isPlaying;
   bool showTabar;
 
-  AudioPlayer audioPlayer = new AudioPlayer();
-
   ValueNotifier isPlayingNotifier = ValueNotifier(0);
 
   ScrollController scrollController = ScrollController();
 
   double tabBarOffset;
-  StreamSubscription<AudioPlayerState> subscription;
 
   @override
   void initState() {
     gscs = widget.gscs;
     index = widget.index;
     gsc = gscs[index];
-    isPlaying = false;
     showTabar = false;
+    isPlaying = false;
     tabBarOffset = 0;
     super.initState();
     isPlayingNotifier.addListener(() {
-      if (!isPlaying && audioPlayer != null) {
-        audioPlayer.stop();
+      if (!isPlaying) {
+        currentPlayId = 0;
+        FlutterBackgroundAudio.stop();
       }
     });
+    WidgetsBinding.instance.addObserver(this);
+    if (currentPlayId != gsc.id) {
+      currentPlayId = 0;
+      FlutterBackgroundAudio.stop();
+    } else {
+      isPlaying = true;
+    }
+  }
 
-    subscription = audioPlayer.onPlayerStateChanged.listen((onData) {
-      if (onData == AudioPlayerState.STOPPED) {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    debugPrint('$state');
+    if (state == AppLifecycleState.resumed) {
+      bool isPlay = await FlutterBackgroundAudio.isPlaying;
+      if (gsc.id == currentPlayId) {
         setState(() {
-          isPlaying = false;
+          isPlaying = isPlay;
         });
       }
-      if (onData == AudioPlayerState.COMPLETED) {
-        togglePlaying();
-      }
-    }, onError: (msg) {
-      setState(() {
-        isPlaying = false;
-      });
-      debugPrint(msg);
-    });
+    }
   }
 
   @override
   void dispose() {
     debugPrint("dispose....");
-    subscription.cancel();
-    audioPlayer.stop();
-    audioPlayer = null;
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -775,24 +779,27 @@ class GscDetailScreenState extends State<GscDetailScreen> {
           fileData: pngBytes, title: gsc.workTitle + "-" + gsc.workAuthor);
       if (result.length != 0) {
         Fluttertoast.showToast(
+            fontSize: 14,
             msg: "截图成功~",
             textColor: mainColor,
             backgroundColor: toastBackgroundColor,
-            gravity: ToastGravity.TOP);
+            gravity: ToastGravity.CENTER);
       } else {
         Fluttertoast.showToast(
+            fontSize: 14,
             msg: "截图出错~",
             textColor: mainColor,
             backgroundColor: toastBackgroundColor,
-            gravity: ToastGravity.TOP);
+            gravity: ToastGravity.CENTER);
       }
     } catch (e) {
       debugPrint(e);
       Fluttertoast.showToast(
+          fontSize: 14,
           msg: "截图出错~",
           textColor: mainColor,
           backgroundColor: toastBackgroundColor,
-          gravity: ToastGravity.TOP);
+          gravity: ToastGravity.CENTER);
     }
     return null;
   }
@@ -808,20 +815,27 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     }
     return GestureDetector(
         child: text,
-        onDoubleTap: () async{
+        onDoubleTap: () async {
           // 双击截图
           await _capturePng();
         },
         onLongPressEnd: (e) {
           // 长按复制内容
-          var data = "标题：" + gsc.workTitle + "\n作者：" + gsc.workDynasty + 
-            "·" + gsc.workAuthor + "\n正文：\n" + gsc.content;
+          var data = "标题：" +
+              gsc.workTitle +
+              "\n作者：" +
+              gsc.workDynasty +
+              "·" +
+              gsc.workAuthor +
+              "\n正文：\n" +
+              gsc.content;
           Clipboard.setData(new ClipboardData(text: data));
           Fluttertoast.showToast(
-            msg: "复制成功~",
-            textColor: mainColor,
-            backgroundColor: toastBackgroundColor,
-            gravity: ToastGravity.TOP);
+              fontSize: 14,
+              msg: "复制成功~",
+              textColor: mainColor,
+              backgroundColor: toastBackgroundColor,
+              gravity: ToastGravity.CENTER);
         },
         onHorizontalDragEnd: (e) {
           // 往左， 下一首
@@ -865,11 +879,14 @@ class GscDetailScreenState extends State<GscDetailScreen> {
     }
   }
 
-  void togglePlaying() async {
+  void togglePlaying() {
     if (!isPlaying) {
-      await audioPlayer.play(gsc.playUrl);
+      FlutterBackgroundAudio.play(gsc.playUrl, 
+        artist: gsc.workDynasty + '·' + gsc.workAuthor, title: gsc.workTitle);
+      currentPlayId = gsc.id;
     } else {
-      await audioPlayer.pause();
+      FlutterBackgroundAudio.pause();
+      currentPlayId = 0;
     }
     setState(() {
       isPlaying = !isPlaying;

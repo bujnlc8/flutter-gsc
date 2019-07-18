@@ -1,4 +1,4 @@
-import 'package:audioplayer/audioplayer.dart';
+import 'package:flutter_background_audio/flutter_background_audio.dart';
 import 'package:flutter/material.dart';
 
 class PlayAudioWidget extends StatefulWidget {
@@ -21,8 +21,6 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
   // 播放链接
   String playUrl;
 
-  final AudioPlayer audioPlayer = new AudioPlayer();
-
   @override
   void initState() {
     super.initState();
@@ -34,7 +32,7 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
   void didUpdateWidget(PlayAudioWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (playUrl != widget.playUrl) {
-      audioPlayer.pause();
+      FlutterBackgroundAudio.pause();
       setState(() {
         isPlaying = false;
         playUrl = widget.playUrl;
@@ -42,28 +40,11 @@ class _PlayAudioWidgetState extends State<PlayAudioWidget> {
     }
   }
 
-  _PlayAudioWidgetState() {
-    audioPlayer.onPlayerStateChanged.listen((onData) {
-      if (onData == AudioPlayerState.STOPPED) {
-        setState(() {
-          playUrl = widget.playUrl;
-          isPlaying = false;
-        });
-      }
-    }, onError: (msg) {
-      setState(() {
-        playUrl = widget.playUrl;
-        isPlaying = false;
-      });
-      debugPrint(msg);
-    });
-  }
-
   void togglePlaying() async {
     if (!isPlaying) {
-      await audioPlayer.play(widget.playUrl);
+      FlutterBackgroundAudio.play(widget.playUrl);
     } else {
-      await audioPlayer.pause();
+      FlutterBackgroundAudio.pause();
     }
     setState(() {
       isPlaying = !isPlaying;

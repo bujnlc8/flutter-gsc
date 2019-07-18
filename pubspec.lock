@@ -8,13 +8,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.1.0"
-  audioplayer:
-    dependency: "direct main"
-    description:
-      name: audioplayer
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.5.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -48,6 +41,15 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_background_audio:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: d3f69e2b6594db6a980a4d35c565f554e4f4e4a5
+      resolved-ref: d3f69e2b6594db6a980a4d35c565f554e4f4e4a5
+      url: "git@github.com:linghaihui/flutter_background_audio.git"
+    source: git
+    version: "0.0.1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
