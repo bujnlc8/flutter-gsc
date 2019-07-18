@@ -20,7 +20,14 @@ const backgroundColor = Color.fromARGB(255, 0xe9, 0xe9, 0xe9);
 
 void main() => runApp(MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return new MyAppState();
+  }
+}
+
+class MyAppState extends State<MyApp> with WidgetsBindingObserver{
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -45,6 +52,26 @@ class MyApp extends StatelessWidget {
         from: "",
       ),
     );
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('$state');
+    if(state == AppLifecycleState.paused){
+      dB.db.close();
+      dB.db = null;
+    }
+  }
+  @override
+  void dispose(){
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 }
 
@@ -155,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     HttpClientRequest request =
         await httpClient.getUrl(Uri.parse(this.homeAip));
-    request.headers.add("user-agent", "iGsc/1.0.0");
+    request.headers.set("user-agent", "iGsc/1.0.0");
     HttpClientResponse response = await request.close();
     String resp = await response.transform(utf8.decoder).join();
     var gscs = jsonDecode(resp)["data"]["data"];
@@ -333,7 +360,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     if (cacheData == null) {
       HttpClientRequest request = await httpClient.getUrl(uri);
-      request.headers.add("User-Agent", "iGsc/1.0.0");
+      request.headers.set("User-Agent", "iGsc/1.0.0");
       HttpClientResponse response = await request.close();
       var resp = await response.transform(utf8.decoder).join();
       gscs = jsonDecode(resp)["data"]["data"];
@@ -639,8 +666,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     super.dispose();
-    dB.db.close();
-    print("dispose...");
+    debugPrint("dispose...");
   }
 }
 
@@ -672,6 +698,8 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   double tabBarOffset;
 
+  
+
   @override
   void initState() {
     gscs = widget.gscs;
@@ -693,6 +721,9 @@ class GscDetailScreenState extends State<GscDetailScreen> {
           isPlaying = false;
         });
       }
+      if(onData == AudioPlayerState.COMPLETED){
+        togglePlaying();
+      }
     }, onError: (msg) {
       setState(() {
         isPlaying = false;
@@ -703,6 +734,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   @override
   void dispose() {
+    audioPlayer.stop();
     audioPlayer = null;
     super.dispose();
   }
@@ -1021,13 +1053,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                 scrollController.animateTo(scrollDistance,
                     curve: Curves.easeInOut,
                     duration: Duration(
-                        milliseconds: (500 * scrollDistance ~/ visibleHeight) + 300));
+                        milliseconds: (300 * scrollDistance ~/ visibleHeight) + 300));
               }
             }
             if (showTabar) {
               scrollController.animateTo(0,
                   curve: Curves.easeOut,
-                  duration: Duration(milliseconds: 800));
+                  duration: Duration(milliseconds: 600));
             }
             setState(() {
               showTabar = !showTabar;

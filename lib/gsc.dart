@@ -1,11 +1,23 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
+
+Future<Null> isWorking;
 
 class MyDb {
   Database db;
   initDb() async {
+    if (isWorking != null) {
+      await isWorking;
+    }
+    if (db != null) {
+      return db;
+    }
+    var completer = new Completer<Null>();
+    isWorking = completer.future;
     db = await openDatabase("gsc_like.db", version: 3,
         onCreate: (Database db, int version) async {
       await db.transaction((tx) async {
@@ -33,13 +45,18 @@ class MyDb {
             """);
       });
     });
+    completer.complete();
+    isWorking = null;
+    return db;
   }
 
   Future<int> insert(String tableName, Map<String, dynamic> map) async {
+    await initDb();
     return await db.insert(tableName, map);
   }
 
   Future<int> delete(String tableName, int id) async {
+    await initDb();
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 
@@ -49,15 +66,14 @@ class MyDb {
     String where,
     List<dynamic> whereArgs,
   ) async {
-    if (db == null) {
-      return null;
-    }
+    await initDb();
     List<Map> maps = await db.query(tableName,
         columns: columns, where: where, whereArgs: whereArgs);
     return maps;
   }
 
   MyDb() {
+    debugPrint("init Db.................");
     initDb();
   }
 }
@@ -205,11 +221,8 @@ class Gsc {
   }
 
   isLiked() async {
-    if (dB == null || dB.db == null) {
-      return false;
-    }
-    var maps =
-        await dB.query("gsc_like", ["id"], "id = ? and `like` = ?", [this.id, 1]);
+    var maps = await dB.query(
+        "gsc_like", ["id"], "id = ? and `like` = ?", [this.id, 1]);
     if (maps.length > 0) {
       this.like = 1;
     } else {
@@ -219,18 +232,12 @@ class Gsc {
   }
 
   toLike() async {
-    if (dB == null || dB.db == null) {
-      return false;
-    }
     var map = this.toMap();
     map["like"] = 1;
     await dB.insert("gsc_like", map);
   }
 
   disLike() async {
-    if (dB == null || dB.db == null) {
-      return false;
-    }
     await dB.delete("gsc_like", this.id);
   }
 
