@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:audioplayer/audioplayer.dart';
 
@@ -27,7 +28,7 @@ class MyApp extends StatefulWidget {
   }
 }
 
-class MyAppState extends State<MyApp> with WidgetsBindingObserver{
+class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -55,7 +56,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver{
   }
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -63,13 +64,16 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver{
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     debugPrint('$state');
-    if(state == AppLifecycleState.paused){
-      dB.db.close();
-      dB.db = null;
+    if (state == AppLifecycleState.paused) {
+      if (dB != null && dB.db != null) {
+        dB.db.close();
+        dB.db = null;
+      }
     }
   }
+
   @override
-  void dispose(){
+  void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -526,6 +530,11 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    if (Platform.isAndroid) {
+      SystemUiOverlayStyle systemUiOverlayStyle =
+          SystemUiOverlayStyle(statusBarColor: Colors.transparent);
+      SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
+    }
     return Scaffold(
         appBar: PreferredSize(
             child: new AppBar(
@@ -697,8 +706,7 @@ class GscDetailScreenState extends State<GscDetailScreen> {
   ScrollController scrollController = ScrollController();
 
   double tabBarOffset;
-
-  
+  StreamSubscription<AudioPlayerState> subscription;
 
   @override
   void initState() {
@@ -715,13 +723,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
       }
     });
 
-    audioPlayer.onPlayerStateChanged.listen((onData) {
+    subscription = audioPlayer.onPlayerStateChanged.listen((onData) {
       if (onData == AudioPlayerState.STOPPED) {
         setState(() {
           isPlaying = false;
         });
       }
-      if(onData == AudioPlayerState.COMPLETED){
+      if (onData == AudioPlayerState.COMPLETED) {
         togglePlaying();
       }
     }, onError: (msg) {
@@ -734,6 +742,8 @@ class GscDetailScreenState extends State<GscDetailScreen> {
 
   @override
   void dispose() {
+    debugPrint("dispose....");
+    subscription.cancel();
     audioPlayer.stop();
     audioPlayer = null;
     super.dispose();
@@ -1044,7 +1054,8 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                 if (bottomHeight > screenHeight - padding) {
                   bottomHeight = visibleHeight;
                 }
-                tabBarOffset = tabBarOffset + bottomHeight + scrollController.offset;
+                tabBarOffset =
+                    tabBarOffset + bottomHeight + scrollController.offset;
               }
               if (tabBarOffset > visibleHeight) {
                 double scrollDistance =
@@ -1053,13 +1064,13 @@ class GscDetailScreenState extends State<GscDetailScreen> {
                 scrollController.animateTo(scrollDistance,
                     curve: Curves.easeInOut,
                     duration: Duration(
-                        milliseconds: (300 * scrollDistance ~/ visibleHeight) + 300));
+                        milliseconds:
+                            (300 * scrollDistance ~/ visibleHeight) + 300));
               }
             }
             if (showTabar) {
               scrollController.animateTo(0,
-                  curve: Curves.easeOut,
-                  duration: Duration(milliseconds: 600));
+                  curve: Curves.easeOut, duration: Duration(milliseconds: 600));
             }
             setState(() {
               showTabar = !showTabar;
